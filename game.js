@@ -1,7 +1,8 @@
-// Advanced Chess Game with Enhanced Features
+// Advanced Chess Game with Enhanced Features - Fixed Version
 class ChessGame {
     constructor() {
         this.engine = null;
+        this.chess = null; // Direct chess.js instance
         this.selectedSquare = null;
         this.gameMode = 'ai';
         this.playerColor = 'white';
@@ -54,6 +55,10 @@ class ChessGame {
                 throw new Error('Chess.js library not loaded!');
             }
             
+            // Initialize chess.js directly
+            this.chess = new Chess();
+            console.log('Chess.js initialized successfully');
+            
             // Initialize chess engine
             this.engine = new ChessEngine(this.gameSettings.difficulty);
             console.log('Chess engine initialized successfully');
@@ -67,8 +72,9 @@ class ChessGame {
             this.updateDisplay();
             this.bindEvents();
             
-            // Apply board theme
+            // Apply board theme and settings
             this.applyBoardTheme();
+            this.applySettings();
             
             // Hide loading screen
             this.hideLoadingScreen();
@@ -100,7 +106,7 @@ class ChessGame {
     showError(message) {
         const boardElement = document.getElementById('chessBoard');
         if (boardElement) {
-            boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">${message}</div>`;
+            boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px; font-size: 16px; line-height: 1.5;">${message}<br><br>Please refresh the page to try again.</div>`;
         }
         this.hideLoadingScreen();
     }
@@ -123,6 +129,13 @@ class ChessGame {
                 square.dataset.col = col;
                 square.dataset.square = this.rowColToAlgebraic(row, col);
                 
+                // Add proper square coloring
+                if ((row + col) % 2 === 0) {
+                    square.style.backgroundColor = 'var(--light-square)';
+                } else {
+                    square.style.backgroundColor = 'var(--dark-square)';
+                }
+                
                 // Add click and drag event listeners
                 square.addEventListener('click', (e) => this.handleSquareClick(e));
                 square.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -137,7 +150,7 @@ class ChessGame {
     
     // Update pieces on board
     updatePieces() {
-        if (!this.engine) return;
+        if (!this.chess) return;
         
         const squares = document.querySelectorAll('.square');
         squares.forEach(square => {
@@ -147,9 +160,9 @@ class ChessGame {
             // Clear previous piece
             square.innerHTML = '';
             
-            // Get piece from engine
+            // Get piece from chess.js
             const algebraicSquare = this.rowColToAlgebraic(row, col);
-            const piece = this.engine.getPieceAt(algebraicSquare);
+            const piece = this.chess.get(algebraicSquare);
             
             if (piece) {
                 const pieceElement = document.createElement('div');
@@ -214,12 +227,12 @@ class ChessGame {
         const col = parseInt(square.dataset.col);
         
         // Check if it's player's turn
-        if (this.gameMode === 'ai' && this.engine.getTurn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
+        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
             return;
         }
         
         const algebraicSquare = this.rowColToAlgebraic(row, col);
-        const piece = this.engine.getPieceAt(algebraicSquare);
+        const piece = this.chess.get(algebraicSquare);
         
         if (this.selectedSquare) {
             // Try to make a move
@@ -227,13 +240,13 @@ class ChessGame {
                 this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
             } else {
                 this.clearSelection();
-                if (piece && piece.color === this.engine.getTurn()) {
+                if (piece && piece.color === this.chess.turn()) {
                     this.selectSquare(row, col);
                 }
             }
         } else {
             // Select piece if it belongs to current player
-            if (piece && piece.color === this.engine.getTurn()) {
+            if (piece && piece.color === this.chess.turn()) {
                 this.selectSquare(row, col);
             }
         }
@@ -249,16 +262,16 @@ class ChessGame {
         const square = event.target.parentElement;
         const row = parseInt(square.dataset.row);
         const col = parseInt(square.dataset.col);
-        const piece = this.engine.getPieceAt(this.rowColToAlgebraic(row, col));
+        const piece = this.chess.get(this.rowColToAlgebraic(row, col));
         
         // Check if it's player's turn
-        if (this.gameMode === 'ai' && this.engine.getTurn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
+        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
             event.preventDefault();
             return;
         }
         
         // Check if piece belongs to current player
-        if (!piece || piece.color !== this.engine.getTurn()) {
+        if (!piece || piece.color !== this.chess.turn()) {
             event.preventDefault();
             return;
         }
@@ -357,7 +370,7 @@ class ChessGame {
     // Highlight valid moves
     highlightValidMoves(row, col) {
         const algebraicSquare = this.rowColToAlgebraic(row, col);
-        const moves = this.engine.getLegalMoves(algebraicSquare);
+        const moves = this.chess.moves({ square: algebraicSquare, verbose: true });
         
         moves.forEach(move => {
             const { row: toRow, col: toCol } = this.algebraicToRowCol(move.to);
@@ -377,7 +390,9 @@ class ChessGame {
     isValidMove(fromRow, fromCol, toRow, toCol) {
         const from = this.rowColToAlgebraic(fromRow, fromCol);
         const to = this.rowColToAlgebraic(toRow, toCol);
-        return this.engine.isValidMove(from, to);
+        
+        const moves = this.chess.moves({ verbose: true });
+        return moves.some(move => move.from === from && move.to === to);
     }
     
     // Make a move
@@ -387,7 +402,7 @@ class ChessGame {
         
         try {
             // Check for pawn promotion
-            const piece = this.engine.getPieceAt(from);
+            const piece = this.chess.get(from);
             let promotion = null;
             
             if (piece && piece.type === 'p') {
@@ -398,9 +413,14 @@ class ChessGame {
             }
             
             // Make the move
-            const move = this.engine.makeMove({ from, to, promotion });
+            const move = this.chess.move({ from, to, promotion });
             
             if (move) {
+                // Sync with engine
+                if (this.engine) {
+                    this.engine.chess.load(this.chess.fen());
+                }
+                
                 this.lastMove = { from, to };
                 this.gameStats.totalMoves++;
                 
@@ -409,7 +429,7 @@ class ChessGame {
                     this.gameStats.captures++;
                 }
                 
-                if (this.engine.inCheck()) {
+                if (this.chess.inCheck()) {
                     this.gameStats.checks++;
                 }
                 
@@ -426,7 +446,7 @@ class ChessGame {
                 this.checkGameState();
                 
                 // AI move if it's AI's turn
-                if (this.gameMode === 'ai' && !this.engine.isGameOver()) {
+                if (this.gameMode === 'ai' && !this.chess.isGameOver()) {
                     setTimeout(() => this.makeAIMove(), 500);
                 }
                 
@@ -440,43 +460,48 @@ class ChessGame {
     
     // Make AI move
     async makeAIMove() {
-        if (!this.engine || this.engine.isGameOver()) return;
+        if (!this.chess || this.chess.isGameOver()) return;
         
         try {
             // Show thinking indicator
             this.showThinkingIndicator();
             
-            // Get best move from AI
-            const move = await this.engine.getBestMove();
-            
-            if (move) {
-                const engineMove = this.engine.makeMove(move);
+            // Sync engine with current position
+            if (this.engine) {
+                this.engine.chess.load(this.chess.fen());
                 
-                if (engineMove) {
-                    this.lastMove = { from: move.from, to: move.to };
-                    this.gameStats.totalMoves++;
+                // Get best move from AI
+                const move = await this.engine.getBestMove();
+                
+                if (move) {
+                    const engineMove = this.chess.move(move);
                     
-                    // Update statistics
-                    if (engineMove.captured) {
-                        this.gameStats.captures++;
+                    if (engineMove) {
+                        this.lastMove = { from: move.from, to: move.to };
+                        this.gameStats.totalMoves++;
+                        
+                        // Update statistics
+                        if (engineMove.captured) {
+                            this.gameStats.captures++;
+                        }
+                        
+                        if (this.chess.inCheck()) {
+                            this.gameStats.checks++;
+                        }
+                        
+                        // Play sound
+                        this.playMoveSound(engineMove);
+                        
+                        // Update display
+                        this.updatePieces();
+                        this.updateDisplay();
+                        this.highlightLastMove();
+                        
+                        // Check game state
+                        this.checkGameState();
+                        
+                        console.log('AI move made:', engineMove);
                     }
-                    
-                    if (this.engine.inCheck()) {
-                        this.gameStats.checks++;
-                    }
-                    
-                    // Play sound
-                    this.playMoveSound(engineMove);
-                    
-                    // Update display
-                    this.updatePieces();
-                    this.updateDisplay();
-                    this.highlightLastMove();
-                    
-                    // Check game state
-                    this.checkGameState();
-                    
-                    console.log('AI move made:', engineMove);
                 }
             }
         } catch (error) {
@@ -548,9 +573,9 @@ class ChessGame {
         if (!this.gameSettings.enableSounds) return;
         
         try {
-            if (this.engine.inCheckmate()) {
+            if (this.chess.isCheckmate()) {
                 this.sounds.checkmate.play();
-            } else if (this.engine.inCheck()) {
+            } else if (this.chess.inCheck()) {
                 this.sounds.check.play();
             } else if (move.flags && move.flags.includes('c')) {
                 this.sounds.castle.play();
@@ -566,10 +591,6 @@ class ChessGame {
     
     // Create sound
     createSound(type) {
-        const audio = new Audio();
-        // Simple sound generation using Web Audio API
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
         const frequencies = {
             'move': 440,
             'capture': 330,
@@ -583,6 +604,7 @@ class ChessGame {
                 if (!this.gameSettings.enableSounds) return;
                 
                 try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
                     
@@ -607,7 +629,7 @@ class ChessGame {
     
     // Update captured pieces
     updateCapturedPieces() {
-        const history = this.engine.getHistory();
+        const history = this.chess.history({ verbose: true });
         const capturedWhite = [];
         const capturedBlack = [];
         
@@ -665,9 +687,9 @@ class ChessGame {
     
     // Update display
     updateDisplay() {
-        if (!this.engine) return;
+        if (!this.chess) return;
         
-        const turn = this.engine.getTurn() === 'w' ? 'White' : 'Black';
+        const turn = this.chess.turn() === 'w' ? 'White' : 'Black';
         const turnElement = document.getElementById('currentTurn');
         if (turnElement) {
             turnElement.textContent = turn;
@@ -715,18 +737,18 @@ class ChessGame {
     // Update move history
     updateMoveHistory() {
         const moveList = document.getElementById('moveList');
-        if (!moveList || !this.engine) return;
+        if (!moveList || !this.chess) return;
         
         moveList.innerHTML = '';
-        const history = this.engine.getHistory();
+        const history = this.chess.history();
         
         for (let i = 0; i < history.length; i += 2) {
             const moveItem = document.createElement('div');
             moveItem.className = 'move-item';
             
             const moveNumber = Math.floor(i / 2) + 1;
-            const whiteMove = history[i] ? history[i].san : '';
-            const blackMove = history[i + 1] ? history[i + 1].san : '';
+            const whiteMove = history[i] || '';
+            const blackMove = history[i + 1] || '';
             
             moveItem.innerHTML = `
                 <span class="move-number">${moveNumber}.</span>
@@ -741,48 +763,52 @@ class ChessGame {
     
     // Update engine analysis
     updateEngineAnalysis() {
-        if (!this.engine) return;
+        if (!this.engine || !this.chess) return;
         
-        const evaluation = this.engine.getCurrentEvaluation();
-        const evalBar = document.getElementById('evalBar');
-        const evalText = document.getElementById('evalText');
-        
-        if (evalBar && evalText) {
-            // Update evaluation bar
-            const percentage = Math.max(0, Math.min(100, (evaluation + 10) * 5));
-            evalBar.style.background = `linear-gradient(90deg, #dc2626 0%, #fbbf24 50%, #16a34a 100%)`;
-            evalBar.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        try {
+            const evaluation = this.engine.getCurrentEvaluation();
+            const evalBar = document.getElementById('evalBar');
+            const evalText = document.getElementById('evalText');
             
-            // Update evaluation text
-            if (Math.abs(evaluation) > 5) {
-                evalText.textContent = evaluation > 0 ? '+M' : '-M';
-            } else {
-                evalText.textContent = evaluation > 0 ? `+${evaluation.toFixed(1)}` : evaluation.toFixed(1);
+            if (evalBar && evalText) {
+                // Update evaluation bar
+                const percentage = Math.max(0, Math.min(100, (evaluation + 10) * 5));
+                evalBar.style.background = `linear-gradient(90deg, #dc2626 0%, #fbbf24 50%, #16a34a 100%)`;
+                evalBar.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                
+                // Update evaluation text
+                if (Math.abs(evaluation) > 5) {
+                    evalText.textContent = evaluation > 0 ? '+M' : '-M';
+                } else {
+                    evalText.textContent = evaluation > 0 ? `+${evaluation.toFixed(1)}` : evaluation.toFixed(1);
+                }
             }
+        } catch (error) {
+            console.log('Engine analysis error:', error);
         }
     }
     
     // Check game state
     checkGameState() {
-        if (!this.engine) return;
+        if (!this.chess) return;
         
-        if (this.engine.isGameOver()) {
+        if (this.chess.isGameOver()) {
             this.gameState = 'ended';
             
             let winner = 'Draw';
             let reason = 'unknown';
             
-            if (this.engine.inCheckmate()) {
-                winner = this.engine.getTurn() === 'w' ? 'Black' : 'White';
+            if (this.chess.isCheckmate()) {
+                winner = this.chess.turn() === 'w' ? 'Black' : 'White';
                 reason = 'checkmate';
-            } else if (this.engine.inStalemate()) {
+            } else if (this.chess.isStalemate()) {
                 reason = 'stalemate';
-            } else if (this.engine.chess.isDraw()) {
+            } else if (this.chess.isDraw()) {
                 reason = 'draw';
             }
             
             setTimeout(() => this.showGameOver(winner, reason), 1000);
-        } else if (this.engine.inCheck()) {
+        } else if (this.chess.inCheck()) {
             // Highlight king in check
             this.highlightKingInCheck();
         }
@@ -796,8 +822,8 @@ class ChessGame {
         });
         
         // Find and highlight king in check
-        const board = this.engine.getBoard();
-        const currentPlayer = this.engine.getTurn();
+        const board = this.chess.board();
+        const currentPlayer = this.chess.turn();
         
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
@@ -876,6 +902,10 @@ class ChessGame {
     
     // New game
     newGame() {
+        if (this.chess) {
+            this.chess.reset();
+        }
+        
         if (this.engine) {
             this.engine.reset();
         }
@@ -908,19 +938,24 @@ class ChessGame {
     
     // Undo move
     undoMove() {
-        if (!this.engine || this.gameStats.totalMoves === 0) return;
+        if (!this.chess || this.gameStats.totalMoves === 0) return;
         
         // Undo player move
-        const undoneMove = this.engine.undoMove();
+        const undoneMove = this.chess.undo();
         if (undoneMove) {
             this.gameStats.totalMoves--;
             
             // Undo AI move if in AI mode
             if (this.gameMode === 'ai' && this.gameStats.totalMoves > 0) {
-                const aiMove = this.engine.undoMove();
+                const aiMove = this.chess.undo();
                 if (aiMove) {
                     this.gameStats.totalMoves--;
                 }
+            }
+            
+            // Sync with engine
+            if (this.engine) {
+                this.engine.chess.load(this.chess.fen());
             }
             
             this.gameState = 'playing';
@@ -1075,9 +1110,9 @@ class ChessGame {
     
     // Export game as PGN
     exportGame() {
-        if (!this.engine) return;
+        if (!this.chess) return;
         
-        const pgn = this.engine.getPgn();
+        const pgn = this.chess.pgn();
         const blob = new Blob([pgn], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         
@@ -1204,6 +1239,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if Chess.js is loaded
     if (typeof Chess === 'undefined') {
         console.error('Chess.js library not loaded!');
+        const boardElement = document.getElementById('chessBoard');
+        if (boardElement) {
+            boardElement.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Chess.js library failed to load. Please refresh the page.</div>';
+        }
         return;
     }
     
@@ -1220,5 +1259,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
     } catch (error) {
         console.error('Failed to initialize chess game:', error);
+        const boardElement = document.getElementById('chessBoard');
+        if (boardElement) {
+            boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">Failed to initialize chess game: ${error.message}</div>`;
+        }
     }
 });
