@@ -1,19 +1,24 @@
-// Enhanced Chess Engine with Fixed AI Logic
+// Enhanced Chess Engine using chess.js library
+// This provides proper move validation and game logic
+
 class ChessEngine {
     constructor(difficulty = 'medium') {
         this.difficulty = difficulty;
+        this.chess = new Chess(); // chess.js instance
         this.depths = {
             'easy': 2,
-            'medium': 4,
-            'hard': 6
+            'medium': 3,
+            'hard': 4
         };
+        
+        // Piece values for evaluation
         this.pieceValues = {
             'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000,
             'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 20000
         };
         
-        // Enhanced position value tables
-        this.positionValues = {
+        // Position evaluation tables
+        this.positionTables = {
             'p': [
                 [0,  0,  0,  0,  0,  0,  0,  0],
                 [50, 50, 50, 50, 50, 50, 50, 50],
@@ -77,159 +82,251 @@ class ChessEngine {
         };
     }
     
+    // Load a position from FEN
+    loadPosition(fen) {
+        return this.chess.load(fen);
+    }
+    
+    // Get current FEN
+    getFen() {
+        return this.chess.fen();
+    }
+    
+    // Get current board state
+    getBoard() {
+        return this.chess.board();
+    }
+    
+    // Check if game is over
+    isGameOver() {
+        return this.chess.isGameOver();
+    }
+    
+    // Check if in check
+    inCheck() {
+        return this.chess.inCheck();
+    }
+    
+    // Check if in checkmate
+    inCheckmate() {
+        return this.chess.isCheckmate();
+    }
+    
+    // Check if in stalemate
+    inStalemate() {
+        return this.chess.isStalemate();
+    }
+    
+    // Get whose turn it is
+    getTurn() {
+        return this.chess.turn();
+    }
+    
+    // Get all legal moves
+    getLegalMoves(square = null) {
+        return this.chess.moves({ square: square, verbose: true });
+    }
+    
+    // Make a move
+    makeMove(move) {
+        return this.chess.move(move);
+    }
+    
+    // Undo last move
+    undoMove() {
+        return this.chess.undo();
+    }
+    
+    // Get move history
+    getHistory() {
+        return this.chess.history({ verbose: true });
+    }
+    
+    // Reset game
+    reset() {
+        this.chess.reset();
+    }
+    
+    // Set difficulty
     setDifficulty(difficulty) {
         this.difficulty = difficulty;
     }
     
-    // Get the best move for the AI
-    getBestMove(board, isWhite) {
+    // Get AI move
+    getBestMove() {
+        if (this.chess.isGameOver()) {
+            return null;
+        }
+        
         const depth = this.depths[this.difficulty];
-        const result = this.minimax(board, depth, -Infinity, Infinity, isWhite);
+        const moves = this.chess.moves({ verbose: true });
+        
+        if (moves.length === 0) {
+            return null;
+        }
         
         // Add some randomness for easy difficulty
-        if (this.difficulty === 'easy' && Math.random() < 0.2) {
-            const allMoves = this.getAllValidMoves(board, isWhite);
-            if (allMoves.length > 0) {
-                return allMoves[Math.floor(Math.random() * allMoves.length)];
+        if (this.difficulty === 'easy' && Math.random() < 0.3) {
+            return moves[Math.floor(Math.random() * moves.length)];
+        }
+        
+        let bestMove = null;
+        let bestScore = -Infinity;
+        
+        for (const move of moves) {
+            this.chess.move(move);
+            const score = this.minimax(depth - 1, -Infinity, Infinity, false);
+            this.chess.undo();
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
             }
         }
         
-        return result.move;
+        return bestMove;
     }
     
-    // Enhanced minimax with better evaluation
-    minimax(board, depth, alpha, beta, isMaximizing) {
-        if (depth === 0 || this.isGameOver(board)) {
-            return { score: this.evaluateBoard(board), move: null };
+    // Minimax algorithm with alpha-beta pruning
+    minimax(depth, alpha, beta, isMaximizing) {
+        if (depth === 0 || this.chess.isGameOver()) {
+            return this.evaluatePosition();
         }
         
-        const moves = this.getAllValidMoves(board, isMaximizing);
-        
-        if (moves.length === 0) {
-            const score = this.isInCheck(board, isMaximizing) ? -20000 : 0;
-            return { score: isMaximizing ? score : -score, move: null };
-        }
-        
-        // Sort moves for better pruning
-        moves.sort((a, b) => this.scoreMoveQuick(board, b) - this.scoreMoveQuick(board, a));
-        
-        let bestMove = null;
+        const moves = this.chess.moves({ verbose: true });
         
         if (isMaximizing) {
             let maxScore = -Infinity;
-            
             for (const move of moves) {
-                const newBoard = this.makeMove(board, move);
-                const result = this.minimax(newBoard, depth - 1, alpha, beta, false);
+                this.chess.move(move);
+                const score = this.minimax(depth - 1, alpha, beta, false);
+                this.chess.undo();
                 
-                if (result.score > maxScore) {
-                    maxScore = result.score;
-                    bestMove = move;
-                }
+                maxScore = Math.max(maxScore, score);
+                alpha = Math.max(alpha, score);
                 
-                alpha = Math.max(alpha, result.score);
                 if (beta <= alpha) {
                     break; // Alpha-beta pruning
                 }
             }
-            
-            return { score: maxScore, move: bestMove };
+            return maxScore;
         } else {
             let minScore = Infinity;
-            
             for (const move of moves) {
-                const newBoard = this.makeMove(board, move);
-                const result = this.minimax(newBoard, depth - 1, alpha, beta, true);
+                this.chess.move(move);
+                const score = this.minimax(depth - 1, alpha, beta, true);
+                this.chess.undo();
                 
-                if (result.score < minScore) {
-                    minScore = result.score;
-                    bestMove = move;
-                }
+                minScore = Math.min(minScore, score);
+                beta = Math.min(beta, score);
                 
-                beta = Math.min(beta, result.score);
                 if (beta <= alpha) {
                     break; // Alpha-beta pruning
                 }
             }
-            
-            return { score: minScore, move: bestMove };
+            return minScore;
         }
     }
     
-    scoreMoveQuick(board, move) {
+    // Evaluate current position
+    evaluatePosition() {
         let score = 0;
-        const capturedPiece = board[move.to.row][move.to.col];
+        const board = this.chess.board();
         
-        if (capturedPiece) {
-            score += this.pieceValues[capturedPiece];
+        // Check for checkmate/stalemate
+        if (this.chess.isCheckmate()) {
+            return this.chess.turn() === 'w' ? -20000 : 20000;
         }
         
-        return score;
-    }
-    
-    // Enhanced board evaluation
-    evaluateBoard(board) {
-        let score = 0;
+        if (this.chess.isStalemate() || this.chess.isDraw()) {
+            return 0;
+        }
         
+        // Evaluate material and position
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const piece = board[row][col];
-                if (piece !== null) {
-                    const pieceValue = this.pieceValues[piece];
-                    const positionValue = this.getPositionValue(piece, row, col);
+                if (piece) {
+                    const pieceValue = this.pieceValues[piece.type];
+                    const positionValue = this.getPositionValue(piece.type, row, col, piece.color);
+                    const totalValue = pieceValue + positionValue;
                     
-                    if (piece === piece.toUpperCase()) {
-                        // White piece
-                        score += pieceValue + positionValue;
+                    if (piece.color === 'w') {
+                        score += totalValue;
                     } else {
-                        // Black piece
-                        score -= pieceValue + positionValue;
+                        score -= totalValue;
                     }
                 }
             }
         }
         
-        // Add bonus for castling rights, pawn structure, etc.
-        score += this.evaluateSpecialFeatures(board);
+        // Add bonus for controlling center
+        score += this.evaluateCenterControl();
+        
+        // Add bonus for piece development
+        score += this.evaluateDevelopment();
+        
+        // Add bonus for king safety
+        score += this.evaluateKingSafety();
         
         return score;
     }
     
-    evaluateSpecialFeatures(board) {
-        let score = 0;
+    // Get position value for a piece
+    getPositionValue(pieceType, row, col, color) {
+        if (!this.positionTables[pieceType]) {
+            return 0;
+        }
         
-        // Bonus for controlling center
-        const centerSquares = [[3,3], [3,4], [4,3], [4,4]];
+        const table = this.positionTables[pieceType];
+        
+        // Flip the table for black pieces
+        if (color === 'b') {
+            return table[7 - row][col];
+        } else {
+            return table[row][col];
+        }
+    }
+    
+    // Evaluate center control
+    evaluateCenterControl() {
+        let score = 0;
+        const board = this.chess.board();
+        const centerSquares = [[3, 3], [3, 4], [4, 3], [4, 4]];
+        
         for (const [row, col] of centerSquares) {
             const piece = board[row][col];
             if (piece) {
-                const bonus = piece === piece.toUpperCase() ? 10 : -10;
+                const bonus = piece.color === 'w' ? 10 : -10;
                 score += bonus;
             }
         }
         
-        // Bonus for piece development
-        score += this.evaluateDevelopment(board);
-        
         return score;
     }
     
-    evaluateDevelopment(board) {
+    // Evaluate piece development
+    evaluateDevelopment() {
         let score = 0;
+        const board = this.chess.board();
         
         // Check if knights and bishops are developed
         const initialPositions = {
-            'N': [[7,1], [7,6]],
-            'B': [[7,2], [7,5]],
-            'n': [[0,1], [0,6]],
-            'b': [[0,2], [0,5]]
+            'wn': [[7, 1], [7, 6]],
+            'wb': [[7, 2], [7, 5]],
+            'bn': [[0, 1], [0, 6]],
+            'bb': [[0, 2], [0, 5]]
         };
         
-        for (const [piece, positions] of Object.entries(initialPositions)) {
+        for (const [key, positions] of Object.entries(initialPositions)) {
+            const color = key[0];
+            const pieceType = key[1];
+            
             for (const [row, col] of positions) {
-                if (board[row][col] !== piece) {
+                const piece = board[row][col];
+                if (!piece || piece.type !== pieceType || piece.color !== color) {
                     // Piece has moved (developed)
-                    const bonus = piece === piece.toUpperCase() ? 15 : -15;
+                    const bonus = color === 'w' ? 15 : -15;
                     score += bonus;
                 }
             }
@@ -238,256 +335,95 @@ class ChessEngine {
         return score;
     }
     
-    // Enhanced position value calculation
-    getPositionValue(piece, row, col) {
-        const pieceType = piece.toLowerCase();
-        if (!this.positionValues[pieceType]) return 0;
+    // Evaluate king safety
+    evaluateKingSafety() {
+        let score = 0;
         
-        const table = this.positionValues[pieceType];
-        
-        // Flip the table for black pieces
-        if (piece === piece.toLowerCase()) {
-            return table[7 - row][col];
-        } else {
-            return table[row][col];
+        // Basic king safety - penalize exposed king
+        if (this.chess.inCheck()) {
+            score -= this.chess.turn() === 'w' ? 50 : -50;
         }
+        
+        return score;
     }
     
-    // Check if king is in check
-    isInCheck(board, isWhite) {
-        const kingSymbol = isWhite ? 'K' : 'k';
-        let kingPos = null;
-        
-        // Find king position
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                if (board[row][col] === kingSymbol) {
-                    kingPos = { row, col };
-                    break;
-                }
-            }
-            if (kingPos) break;
-        }
-        
-        if (!kingPos) return false;
-        
-        // Check if any opponent piece can attack the king
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = board[row][col];
-                if (piece && (piece === piece.toUpperCase()) !== isWhite) {
-                    const moves = this.getValidMoves(board, row, col);
-                    for (const move of moves) {
-                        if (move.to.row === kingPos.row && move.to.col === kingPos.col) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return false;
+    // Convert chess.js move to our format
+    convertMove(move) {
+        return {
+            from: move.from,
+            to: move.to,
+            promotion: move.promotion,
+            flags: move.flags,
+            piece: move.piece,
+            captured: move.captured,
+            san: move.san
+        };
     }
     
-    // Get all valid moves for a color
-    getAllValidMoves(board, isWhite) {
-        const moves = [];
+    // Validate move
+    isValidMove(from, to) {
+        const moves = this.chess.moves({ verbose: true });
+        return moves.some(move => move.from === from && move.to === to);
+    }
+    
+    // Get piece at square
+    getPieceAt(square) {
+        return this.chess.get(square);
+    }
+    
+    // Get all pieces
+    getAllPieces() {
+        const board = this.chess.board();
+        const pieces = [];
         
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const piece = board[row][col];
-                if (piece !== null) {
-                    const pieceIsWhite = piece === piece.toUpperCase();
-                    if (pieceIsWhite === isWhite) {
-                        const pieceMoves = this.getValidMoves(board, row, col);
-                        moves.push(...pieceMoves);
-                    }
+                if (piece) {
+                    pieces.push({
+                        ...piece,
+                        square: String.fromCharCode(97 + col) + (8 - row)
+                    });
                 }
             }
         }
         
-        return moves;
+        return pieces;
     }
     
-    // Get valid moves for a piece at a specific position
-    getValidMoves(board, row, col) {
-        const piece = board[row][col];
-        if (piece === null) return [];
-        
-        const moves = [];
-        const pieceType = piece.toLowerCase();
-        const isWhite = piece === piece.toUpperCase();
-        
-        switch (pieceType) {
-            case 'p':
-                moves.push(...this.getPawnMoves(board, row, col, isWhite));
-                break;
-            case 'r':
-                moves.push(...this.getRookMoves(board, row, col, isWhite));
-                break;
-            case 'n':
-                moves.push(...this.getKnightMoves(board, row, col, isWhite));
-                break;
-            case 'b':
-                moves.push(...this.getBishopMoves(board, row, col, isWhite));
-                break;
-            case 'q':
-                moves.push(...this.getQueenMoves(board, row, col, isWhite));
-                break;
-            case 'k':
-                moves.push(...this.getKingMoves(board, row, col, isWhite));
-                break;
+    // Get game status
+    getGameStatus() {
+        if (this.chess.isCheckmate()) {
+            return this.chess.turn() === 'w' ? 'Black wins by checkmate' : 'White wins by checkmate';
         }
         
-        // Filter out moves that would leave king in check
-        return moves.filter(move => !this.wouldBeInCheck(board, move, isWhite));
-    }
-    
-    wouldBeInCheck(board, move, isWhite) {
-        const newBoard = this.makeMove(board, move);
-        return this.isInCheck(newBoard, isWhite);
-    }
-    
-    // Enhanced pawn moves
-    getPawnMoves(board, row, col, isWhite) {
-        const moves = [];
-        const direction = isWhite ? -1 : 1;
-        const startRow = isWhite ? 6 : 1;
-        
-        // Forward move
-        if (this.isValidSquare(row + direction, col) && board[row + direction][col] === null) {
-            moves.push({ from: { row, col }, to: { row: row + direction, col } });
-            
-            // Double move from starting position
-            if (row === startRow && board[row + 2 * direction][col] === null) {
-                moves.push({ from: { row, col }, to: { row: row + 2 * direction, col } });
-            }
+        if (this.chess.isStalemate()) {
+            return 'Draw by stalemate';
         }
         
-        // Capture moves
-        for (const captureCol of [col - 1, col + 1]) {
-            if (this.isValidSquare(row + direction, captureCol)) {
-                const targetPiece = board[row + direction][captureCol];
-                if (targetPiece !== null && (targetPiece === targetPiece.toUpperCase()) !== isWhite) {
-                    moves.push({ from: { row, col }, to: { row: row + direction, col: captureCol } });
-                }
-            }
+        if (this.chess.isDraw()) {
+            return 'Draw';
         }
         
-        return moves;
-    }
-    
-    getRookMoves(board, row, col, isWhite) {
-        const moves = [];
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-        
-        for (const [dRow, dCol] of directions) {
-            for (let i = 1; i < 8; i++) {
-                const newRow = row + i * dRow;
-                const newCol = col + i * dCol;
-                
-                if (!this.isValidSquare(newRow, newCol)) break;
-                
-                const targetPiece = board[newRow][newCol];
-                if (targetPiece === null) {
-                    moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                } else {
-                    if ((targetPiece === targetPiece.toUpperCase()) !== isWhite) {
-                        moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                    }
-                    break;
-                }
-            }
+        if (this.chess.inCheck()) {
+            return this.chess.turn() === 'w' ? 'White in check' : 'Black in check';
         }
         
-        return moves;
+        return this.chess.turn() === 'w' ? 'White to move' : 'Black to move';
     }
     
-    getKnightMoves(board, row, col, isWhite) {
-        const moves = [];
-        const knightMoves = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
-        
-        for (const [dRow, dCol] of knightMoves) {
-            const newRow = row + dRow;
-            const newCol = col + dCol;
-            
-            if (this.isValidSquare(newRow, newCol)) {
-                const targetPiece = board[newRow][newCol];
-                if (targetPiece === null || (targetPiece === targetPiece.toUpperCase()) !== isWhite) {
-                    moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                }
-            }
-        }
-        
-        return moves;
+    // Get PGN
+    getPgn() {
+        return this.chess.pgn();
     }
     
-    getBishopMoves(board, row, col, isWhite) {
-        const moves = [];
-        const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-        
-        for (const [dRow, dCol] of directions) {
-            for (let i = 1; i < 8; i++) {
-                const newRow = row + i * dRow;
-                const newCol = col + i * dCol;
-                
-                if (!this.isValidSquare(newRow, newCol)) break;
-                
-                const targetPiece = board[newRow][newCol];
-                if (targetPiece === null) {
-                    moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                } else {
-                    if ((targetPiece === targetPiece.toUpperCase()) !== isWhite) {
-                        moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                    }
-                    break;
-                }
-            }
-        }
-        
-        return moves;
+    // Load PGN
+    loadPgn(pgn) {
+        return this.chess.loadPgn(pgn);
     }
-    
-    getQueenMoves(board, row, col, isWhite) {
-        return [...this.getRookMoves(board, row, col, isWhite), ...this.getBishopMoves(board, row, col, isWhite)];
-    }
-    
-    getKingMoves(board, row, col, isWhite) {
-        const moves = [];
-        const directions = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
-        
-        for (const [dRow, dCol] of directions) {
-            const newRow = row + dRow;
-            const newCol = col + dCol;
-            
-            if (this.isValidSquare(newRow, newCol)) {
-                const targetPiece = board[newRow][newCol];
-                if (targetPiece === null || (targetPiece === targetPiece.toUpperCase()) !== isWhite) {
-                    moves.push({ from: { row, col }, to: { row: newRow, col: newCol } });
-                }
-            }
-        }
-        
-        return moves;
-    }
-    
-    // Helper methods
-    isValidSquare(row, col) {
-        return row >= 0 && row < 8 && col >= 0 && col < 8;
-    }
-    
-    makeMove(board, move) {
-        const newBoard = board.map(row => [...row]);
-        const { from, to } = move;
-        
-        newBoard[to.row][to.col] = newBoard[from.row][from.col];
-        newBoard[from.row][from.col] = null;
-        
-        return newBoard;
-    }
-    
-    isGameOver(board) {
-        // Check for insufficient material, etc.
-        return false;
-    }
+}
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ChessEngine;
 }
