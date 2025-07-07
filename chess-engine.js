@@ -1,4 +1,4 @@
-// Enhanced Chess Engine with Advanced AI and Multiple Difficulty Levels - Complete Version
+// Enhanced Chess Engine with Advanced AI and Multiple Difficulty Levels - Fixed Version
 class ChessEngine {
     constructor(difficulty = 'medium') {
         this.difficulty = difficulty;
@@ -131,6 +131,57 @@ class ChessEngine {
         this.principalVariation = [];
     }
     
+    // Safe chess.js method wrappers
+    isGameOver() {
+        try {
+            return this.chess.game_over ? this.chess.game_over() : 
+                   this.chess.isGameOver ? this.chess.isGameOver() : false;
+        } catch (error) {
+            console.log('⚠️ Engine isGameOver error:', error);
+            return false;
+        }
+    }
+    
+    inCheck() {
+        try {
+            return this.chess.in_check ? this.chess.in_check() : 
+                   this.chess.inCheck ? this.chess.inCheck() : false;
+        } catch (error) {
+            console.log('⚠️ Engine inCheck error:', error);
+            return false;
+        }
+    }
+    
+    inCheckmate() {
+        try {
+            return this.chess.in_checkmate ? this.chess.in_checkmate() : 
+                   this.chess.isCheckmate ? this.chess.isCheckmate() : false;
+        } catch (error) {
+            console.log('⚠️ Engine inCheckmate error:', error);
+            return false;
+        }
+    }
+    
+    inStalemate() {
+        try {
+            return this.chess.in_stalemate ? this.chess.in_stalemate() : 
+                   this.chess.isStalemate ? this.chess.isStalemate() : false;
+        } catch (error) {
+            console.log('⚠️ Engine inStalemate error:', error);
+            return false;
+        }
+    }
+    
+    isDraw() {
+        try {
+            return this.chess.in_draw ? this.chess.in_draw() : 
+                   this.chess.isDraw ? this.chess.isDraw() : false;
+        } catch (error) {
+            console.log('⚠️ Engine isDraw error:', error);
+            return false;
+        }
+    }
+    
     // Basic methods
     loadPosition(fen) {
         const result = this.chess.load(fen);
@@ -140,10 +191,6 @@ class ChessEngine {
     
     getFen() { return this.chess.fen(); }
     getBoard() { return this.chess.board(); }
-    isGameOver() { return this.chess.isGameOver(); }
-    inCheck() { return this.chess.inCheck(); }
-    inCheckmate() { return this.chess.isCheckmate(); }
-    inStalemate() { return this.chess.isStalemate(); }
     getTurn() { return this.chess.turn(); }
     getHistory() { return this.chess.history({ verbose: true }); }
     
@@ -175,7 +222,7 @@ class ChessEngine {
     
     // Enhanced AI move selection
     async getBestMove() {
-        if (this.chess.isGameOver()) return null;
+        if (this.isGameOver()) return null;
         
         const settings = this.difficulties[this.difficulty];
         const moves = this.chess.moves({ verbose: true });
@@ -238,7 +285,7 @@ class ChessEngine {
         // Check for checkmate in one
         for (const move of moves) {
             this.chess.move(move);
-            if (this.chess.isCheckmate()) {
+            if (this.inCheckmate()) {
                 this.chess.undo();
                 return move;
             }
@@ -246,7 +293,7 @@ class ChessEngine {
         }
         
         // If in check, prioritize check evasion
-        if (this.chess.inCheck()) {
+        if (this.inCheck()) {
             return moves[0]; // First legal move when in check
         }
         
@@ -270,7 +317,7 @@ class ChessEngine {
     getBlunderMove(moves) {
         const badMoves = moves.filter(move => {
             this.chess.move(move);
-            const isBlunder = this.chess.inCheck() || this.isHangingPiece(move.to);
+            const isBlunder = this.inCheck() || this.isHangingPiece(move.to);
             this.chess.undo();
             return isBlunder;
         });
@@ -341,7 +388,7 @@ class ChessEngine {
         }
         
         // Terminal node evaluation
-        if (depth === 0 || this.chess.isGameOver()) {
+        if (depth === 0 || this.isGameOver()) {
             return this.quiescenceSearch(alpha, beta, 0);
         }
         
@@ -457,11 +504,11 @@ class ChessEngine {
     
     // Enhanced position evaluation
     evaluatePosition() {
-        if (this.chess.isCheckmate()) {
+        if (this.inCheckmate()) {
             return this.chess.turn() === 'w' ? -20000 : 20000;
         }
         
-        if (this.chess.isStalemate() || this.chess.isDraw()) {
+        if (this.inStalemate() || this.isDraw()) {
             return 0;
         }
         
@@ -597,7 +644,7 @@ class ChessEngine {
     evaluateKingSafety() {
         let score = 0;
         
-        if (this.chess.inCheck()) {
+        if (this.inCheck()) {
             score += this.chess.turn() === 'w' ? -50 : 50;
         }
         
@@ -736,15 +783,20 @@ class ChessEngine {
     
     // Get current evaluation for display
     getCurrentEvaluation() {
-        if (this.chess.isGameOver()) {
-            if (this.chess.isCheckmate()) {
-                return this.chess.turn() === 'w' ? -999 : 999;
+        try {
+            if (this.isGameOver()) {
+                if (this.inCheckmate()) {
+                    return this.chess.turn() === 'w' ? -999 : 999;
+                }
+                return 0;
             }
+            
+            const evaluation = this.evaluatePosition();
+            return Math.max(-999, Math.min(999, evaluation / 100));
+        } catch (error) {
+            console.log('🔍 Engine getCurrentEvaluation error:', error);
             return 0;
         }
-        
-        const evaluation = this.evaluatePosition();
-        return Math.max(-999, Math.min(999, evaluation / 100));
     }
     
     // Get best move suggestion for analysis
@@ -782,12 +834,12 @@ class ChessEngine {
     
     // Get enhanced game status
     getGameStatus() {
-        if (this.chess.isCheckmate()) {
+        if (this.inCheckmate()) {
             return this.chess.turn() === 'w' ? '🏆 Black wins by checkmate!' : '🏆 White wins by checkmate!';
         }
-        if (this.chess.isStalemate()) return '🤝 Draw by stalemate';
-        if (this.chess.isDraw()) return '🤝 Draw by repetition/50-move rule';
-        if (this.chess.inCheck()) {
+        if (this.inStalemate()) return '🤝 Draw by stalemate';
+        if (this.isDraw()) return '🤝 Draw by repetition/50-move rule';
+        if (this.inCheck()) {
             return this.chess.turn() === 'w' ? '⚠️ White is in check!' : '⚠️ Black is in check!';
         }
         return this.chess.turn() === 'w' ? '⚪ White to move' : '⚫ Black to move';
