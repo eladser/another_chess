@@ -1,3 +1,5 @@
+/* Enhanced Chess Game Styles - Version 2.0 */
+
 * {
     margin: 0;
     padding: 0;
@@ -19,7 +21,7 @@ body {
     padding: 20px;
 }
 
-/* Header */
+/* Header Styles */
 .header {
     display: flex;
     justify-content: space-between;
@@ -184,7 +186,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Chess Board */
+/* Chess Board Container */
 .chess-board-container {
     display: flex;
     justify-content: center;
@@ -226,6 +228,8 @@ body {
 
 .coord {
     transition: all 0.3s ease;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .coord:hover {
@@ -239,6 +243,7 @@ body {
     align-items: center;
 }
 
+/* Enhanced Chess Board */
 .chess-board {
     display: grid;
     grid-template-columns: repeat(8, 80px);
@@ -259,6 +264,7 @@ body {
     transform: rotate(180deg);
 }
 
+/* Enhanced Square Styling */
 .square {
     width: 80px;
     height: 80px;
@@ -272,108 +278,58 @@ body {
     user-select: none;
 }
 
-/* Board themes */
-.board-theme-classic .square:nth-child(odd) {
+/* Square Color Classes */
+.square.light-square {
+    background: var(--light-square);
+}
+
+.square.dark-square {
+    background: var(--dark-square);
+}
+
+/* Board Themes */
+.board-theme-classic .square.light-square {
     background: #f0d9b5;
 }
 
-.board-theme-classic .square:nth-child(even) {
+.board-theme-classic .square.dark-square {
     background: #b58863;
 }
 
-.board-theme-wooden .square:nth-child(odd) {
+.board-theme-wooden .square.light-square {
     background: #d4a574;
 }
 
-.board-theme-wooden .square:nth-child(even) {
+.board-theme-wooden .square.dark-square {
     background: #8b4513;
 }
 
-.board-theme-marble .square:nth-child(odd) {
+.board-theme-marble .square.light-square {
     background: #e8e8e8;
 }
 
-.board-theme-marble .square:nth-child(even) {
+.board-theme-marble .square.dark-square {
     background: #696969;
 }
 
-.board-theme-glass .square:nth-child(odd) {
+.board-theme-glass .square.light-square {
     background: rgba(255, 255, 255, 0.8);
 }
 
-.board-theme-glass .square:nth-child(even) {
+.board-theme-glass .square.dark-square {
     background: rgba(0, 0, 0, 0.6);
 }
 
-/* Fix alternating pattern */
-.square:nth-child(8n+1),
-.square:nth-child(8n+3),
-.square:nth-child(8n+5),
-.square:nth-child(8n+7) {
-    background: var(--light-square);
-}
-
-.square:nth-child(8n+2),
-.square:nth-child(8n+4),
-.square:nth-child(8n+6),
-.square:nth-child(8n+8) {
-    background: var(--dark-square);
-}
-
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+1),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+3),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+5),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+7) {
-    background: var(--dark-square);
-}
-
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+2),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+4),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+6),
-.square:nth-child(n+9):nth-child(-n+16):nth-child(8n+8) {
-    background: var(--light-square);
-}
-
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+1),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+3),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+5),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+7),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+1),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+3),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+5),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+7),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+1),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+3),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+5),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+7) {
-    background: var(--light-square);
-}
-
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+2),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+4),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+6),
-.square:nth-child(n+17):nth-child(-n+24):nth-child(8n+8),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+2),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+4),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+6),
-.square:nth-child(n+33):nth-child(-n+40):nth-child(8n+8),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+2),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+4),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+6),
-.square:nth-child(n+49):nth-child(-n+56):nth-child(8n+8) {
-    background: var(--dark-square);
-}
-
-/* Set default theme */
+/* Default theme variables */
 :root {
     --light-square: #f0d9b5;
     --dark-square: #b58863;
 }
 
-/* Square states */
+/* Enhanced Square States */
 .square.selected {
     background: #667eea !important;
-    box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.9);
     animation: selectedPulse 2s infinite;
 }
 
@@ -383,7 +339,7 @@ body {
 }
 
 .square.valid-move {
-    background: rgba(0, 255, 150, 0.3) !important;
+    background: rgba(34, 197, 94, 0.4) !important;
     position: relative;
 }
 
@@ -392,7 +348,7 @@ body {
     position: absolute;
     width: 24px;
     height: 24px;
-    background: rgba(0, 255, 150, 0.8);
+    background: rgba(34, 197, 94, 0.9);
     border-radius: 50%;
     pointer-events: none;
     animation: moveHint 1.5s infinite;
@@ -404,7 +360,7 @@ body {
 }
 
 .square.capture-move {
-    background: rgba(255, 50, 50, 0.3) !important;
+    background: rgba(239, 68, 68, 0.4) !important;
     position: relative;
 }
 
@@ -413,7 +369,7 @@ body {
     position: absolute;
     width: 70px;
     height: 70px;
-    border: 4px solid rgba(255, 50, 50, 0.8);
+    border: 4px solid rgba(239, 68, 68, 0.9);
     border-radius: 50%;
     pointer-events: none;
     animation: captureHint 1s infinite;
@@ -435,17 +391,18 @@ body {
 }
 
 .square.last-move {
-    background: rgba(255, 255, 0, 0.4) !important;
-    box-shadow: inset 0 0 0 3px rgba(255, 255, 0, 0.8);
+    background: rgba(255, 235, 59, 0.5) !important;
+    box-shadow: inset 0 0 0 3px rgba(255, 235, 59, 0.9);
 }
 
 .square.drop-target {
-    background: rgba(102, 126, 234, 0.5) !important;
+    background: rgba(102, 126, 234, 0.6) !important;
     transform: scale(1.05);
     z-index: 10;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
 }
 
-/* Chess Pieces */
+/* Enhanced Chess Pieces */
 .piece {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: grab;
@@ -461,14 +418,16 @@ body {
     color: #ffffff;
     text-shadow: 
         0 0 15px rgba(255, 255, 255, 0.8),
-        0 3px 6px rgba(0, 0, 0, 0.8);
+        0 3px 6px rgba(0, 0, 0, 0.8),
+        0 0 25px rgba(255, 255, 255, 0.6);
 }
 
 .piece.black-piece {
-    color: #2a2a2a;
+    color: #1a1a1a;
     text-shadow: 
-        0 0 15px rgba(255, 215, 0, 0.6),
-        0 3px 6px rgba(0, 0, 0, 0.8);
+        0 0 15px rgba(255, 215, 0, 0.8),
+        0 3px 6px rgba(0, 0, 0, 0.9),
+        0 0 25px rgba(255, 215, 0, 0.4);
 }
 
 .piece:hover {
@@ -479,14 +438,16 @@ body {
 
 .piece.white-piece:hover {
     text-shadow: 
-        0 0 20px rgba(255, 255, 255, 1),
-        0 3px 8px rgba(0, 0, 0, 0.9);
+        0 0 25px rgba(255, 255, 255, 1),
+        0 3px 8px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(255, 255, 255, 0.8);
 }
 
 .piece.black-piece:hover {
     text-shadow: 
-        0 0 20px rgba(255, 215, 0, 0.8),
-        0 3px 8px rgba(0, 0, 0, 0.9);
+        0 0 25px rgba(255, 215, 0, 1),
+        0 3px 8px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(255, 215, 0, 0.6);
 }
 
 .piece.dragging {
@@ -495,6 +456,7 @@ body {
     pointer-events: none;
     cursor: grabbing;
     opacity: 0.9;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.8));
 }
 
 .piece.moving {
@@ -647,6 +609,11 @@ body {
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
     text-align: center;
+    transition: all 0.3s ease;
+}
+
+.best-move:hover {
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .move-history h3 {
@@ -668,6 +635,7 @@ body {
 .move-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.9);
@@ -685,6 +653,13 @@ body {
 .move-number {
     font-weight: 700;
     color: #667eea;
+    margin-right: 10px;
+}
+
+.move-text {
+    margin-right: 10px;
+    font-family: monospace;
+    font-weight: 600;
 }
 
 /* Modal Styles */
@@ -947,6 +922,27 @@ body {
     color: rgba(255, 255, 255, 0.8);
 }
 
+/* Error Message */
+.error-message {
+    text-align: center;
+    padding: 40px;
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.error-message h3 {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #ff6b6b;
+}
+
+.error-message p {
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .game-area {
@@ -1086,5 +1082,72 @@ body {
     
     .modal-footer {
         padding: 15px 20px;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.6);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.8);
+}
+
+/* Selection Styling */
+::selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+/* Focus Styling */
+.btn:focus,
+select:focus,
+input:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .square.light-square {
+        background: #ffffff;
+        color: #000000;
+    }
+    
+    .square.dark-square {
+        background: #000000;
+        color: #ffffff;
+    }
+    
+    .piece.white-piece {
+        color: #ffffff;
+        text-shadow: 0 0 0 #000000;
+    }
+    
+    .piece.black-piece {
+        color: #000000;
+        text-shadow: 0 0 0 #ffffff;
     }
 }
