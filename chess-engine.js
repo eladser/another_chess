@@ -81,10 +81,9 @@ class ChessEngine {
         this.difficulty = difficulty;
     }
     
-    // FIXED: Get the best move - corrected AI logic
+    // Get the best move for the AI
     getBestMove(board, isWhite) {
         const depth = this.depths[this.difficulty];
-        // FIXED: Pass the correct color to minimax
         const result = this.minimax(board, depth, -Infinity, Infinity, isWhite);
         
         // Add some randomness for easy difficulty
