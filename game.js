@@ -1,20 +1,22 @@
-// Enhanced Chess Game with Drag & Drop and Advanced Features
+// Enhanced Chess Game with chess.js integration and beautiful pieces
 class ChessGame {
     constructor() {
-        this.board = this.initializeBoard();
+        // Initialize chess.js if available
+        this.chess = typeof Chess !== 'undefined' ? new Chess() : null;
+        this.engine = null;
+        
         this.currentPlayer = 'white';
         this.selectedSquare = null;
         this.validMoves = [];
-        this.gameMode = 'ai'; // 'ai' or 'human'
+        this.gameMode = 'ai';
         this.playerColor = 'white';
-        this.moveHistory = [];
-        this.capturedPieces = { white: [], black: [] };
-        this.gameState = 'playing'; // 'playing', 'check', 'checkmate', 'stalemate'
+        this.gameState = 'playing';
         this.lastMove = null;
         this.boardFlipped = false;
+        
         this.settings = {
-            boardTheme: 'classic',
-            pieceStyle: 'classic',
+            boardTheme: 'modern',
+            pieceStyle: 'modern',
             difficulty: 'medium',
             enableSound: true,
             enableAnimations: true,
@@ -25,7 +27,6 @@ class ChessGame {
         // Drag and drop state
         this.draggedPiece = null;
         this.draggedFrom = null;
-        this.dragOffset = { x: 0, y: 0 };
         
         // Game statistics
         this.gameStats = {
@@ -40,33 +41,23 @@ class ChessGame {
         this.audioContext = null;
         this.sounds = {};
         
-        // Initialize chess engine if available
-        this.engine = window.ChessEngine ? new ChessEngine(this.settings.difficulty) : null;
         this.initializeGame();
-    }
-    
-    initializeBoard() {
-        const board = Array(8).fill(null).map(() => Array(8).fill(null));
-        
-        // Place pieces in starting position
-        // Black pieces (top)
-        board[0] = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
-        board[1] = Array(8).fill('p');
-        
-        // White pieces (bottom)
-        board[6] = Array(8).fill('P');
-        board[7] = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'];
-        
-        return board;
     }
     
     async initializeGame() {
         this.gameStats.startTime = Date.now();
+        
+        // Initialize chess engine
+        if (typeof ChessEngine !== 'undefined') {
+            this.engine = new ChessEngine(this.settings.difficulty);
+        }
+        
         await this.initializeAudio();
         this.createBoard();
         this.updateDisplay();
         this.bindEvents();
         this.applyTheme();
+        this.updatePieces();
     }
     
     async initializeAudio() {
@@ -119,13 +110,6 @@ class ChessGame {
                 square.dataset.row = row;
                 square.dataset.col = col;
                 
-                // Add alternating colors
-                if ((row + col) % 2 === 0) {
-                    square.classList.add('light');
-                } else {
-                    square.classList.add('dark');
-                }
-                
                 // Add event listeners
                 square.addEventListener('click', (e) => this.handleSquareClick(e));
                 
@@ -138,8 +122,6 @@ class ChessGame {
                 boardElement.appendChild(square);
             }
         }
-        
-        this.updatePieces();
     }
     
     updatePieces() {
@@ -147,22 +129,34 @@ class ChessGame {
         squares.forEach(square => {
             const row = parseInt(square.dataset.row);
             const col = parseInt(square.dataset.col);
-            const piece = this.board[row][col];
             
             // Clear previous piece
             square.innerHTML = '';
+            
+            // Get piece from chess.js if available
+            let piece = null;
+            if (this.chess) {
+                const algebraicSquare = this.rowColToAlgebraic(row, col);
+                const chessJsPiece = this.chess.get(algebraicSquare);
+                if (chessJsPiece) {
+                    piece = chessJsPiece.color === 'w' ? 
+                        chessJsPiece.type.toUpperCase() : 
+                        chessJsPiece.type.toLowerCase();
+                }
+            }
             
             if (piece) {
                 const pieceElement = document.createElement('div');
                 pieceElement.className = 'piece';
                 
-                // Add color class for better distinction
+                // Add color class
                 if (piece === piece.toUpperCase()) {
                     pieceElement.classList.add('white-piece');
                 } else {
                     pieceElement.classList.add('black-piece');
                 }
                 
+                // Use beautiful Unicode symbols
                 pieceElement.innerHTML = this.getPieceSymbol(piece);
                 pieceElement.draggable = this.settings.enableDragDrop;
                 
@@ -178,11 +172,26 @@ class ChessGame {
     }
     
     getPieceSymbol(piece) {
+        // Beautiful Unicode chess symbols
         const pieces = {
             'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
             'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
         };
         return pieces[piece] || '';
+    }
+    
+    rowColToAlgebraic(row, col) {
+        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+        return files[col] + ranks[row];
+    }
+    
+    algebraicToRowCol(algebraic) {
+        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+        const col = files.indexOf(algebraic[0]);
+        const row = ranks.indexOf(algebraic[1]);
+        return { row, col };
     }
     
     // Drag and drop handlers
@@ -192,28 +201,27 @@ class ChessGame {
             return;
         }
         
-        if (this.gameMode === 'ai' && this.currentPlayer !== this.playerColor) {
+        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
             event.preventDefault();
             return;
         }
         
-        const piece = this.board[row][col];
-        if (!piece || !this.isPieceOwnedByCurrentPlayer(piece)) {
+        const algebraicSquare = this.rowColToAlgebraic(row, col);
+        const piece = this.chess ? this.chess.get(algebraicSquare) : null;
+        
+        if (!piece || (this.chess && this.chess.turn() !== piece.color)) {
             event.preventDefault();
             return;
         }
         
-        this.draggedPiece = piece;
         this.draggedFrom = { row, col };
-        
         event.dataTransfer.setData('text/plain', `${row},${col}`);
         event.dataTransfer.effectAllowed = 'move';
-        
         event.target.classList.add('dragging');
         
         this.clearSelection();
         this.selectedSquare = { row, col };
-        this.validMoves = this.getValidMoves(row, col);
+        this.updateValidMoves();
         
         if (this.settings.showLegalMoves) {
             this.highlightValidMoves();
@@ -224,11 +232,10 @@ class ChessGame {
         event.target.classList.remove('dragging');
         this.clearDragHighlights();
         
-        if (!this.draggedPiece) {
+        if (!this.draggedFrom) {
             this.clearSelection();
         }
         
-        this.draggedPiece = null;
         this.draggedFrom = null;
     }
     
@@ -240,7 +247,7 @@ class ChessGame {
     handleDragEnter(event) {
         event.preventDefault();
         
-        if (this.draggedPiece) {
+        if (this.draggedFrom) {
             const row = parseInt(event.currentTarget.dataset.row);
             const col = parseInt(event.currentTarget.dataset.col);
             
@@ -264,12 +271,12 @@ class ChessGame {
         
         event.currentTarget.classList.remove('drag-over', 'drag-invalid');
         
-        if (this.draggedPiece && this.draggedFrom) {
+        if (this.draggedFrom) {
             if (this.isValidMove(this.draggedFrom.row, this.draggedFrom.col, row, col)) {
                 this.makeMove(this.draggedFrom.row, this.draggedFrom.col, row, col);
                 this.clearSelection();
                 
-                if (this.gameMode === 'ai' && this.currentPlayer !== this.playerColor) {
+                if (this.gameMode === 'ai' && !this.chess.isGameOver()) {
                     setTimeout(() => this.makeAIMove(), 500);
                 }
             }
@@ -289,7 +296,7 @@ class ChessGame {
         
         if (this.gameState !== 'playing') return;
         
-        if (this.gameMode === 'ai' && this.currentPlayer !== this.playerColor) {
+        if (this.gameMode === 'ai' && this.chess && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
             return;
         }
         
@@ -298,7 +305,7 @@ class ChessGame {
                 this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
                 this.clearSelection();
                 
-                if (this.gameMode === 'ai' && this.currentPlayer !== this.playerColor) {
+                if (this.gameMode === 'ai' && !this.chess.isGameOver()) {
                     setTimeout(() => this.makeAIMove(), 500);
                 }
             } else {
@@ -310,18 +317,33 @@ class ChessGame {
     }
     
     selectSquare(row, col) {
-        const piece = this.board[row][col];
-        
         this.clearSelection();
         
-        if (piece && this.isPieceOwnedByCurrentPlayer(piece)) {
+        const algebraicSquare = this.rowColToAlgebraic(row, col);
+        const piece = this.chess ? this.chess.get(algebraicSquare) : null;
+        
+        if (piece && this.chess && this.chess.turn() === piece.color) {
             this.selectedSquare = { row, col };
-            this.validMoves = this.getValidMoves(row, col);
+            this.updateValidMoves();
             this.highlightSquare(row, col, 'selected');
             
             if (this.settings.showLegalMoves) {
                 this.highlightValidMoves();
             }
+        }
+    }
+    
+    updateValidMoves() {
+        this.validMoves = [];
+        
+        if (this.selectedSquare && this.chess) {
+            const algebraicSquare = this.rowColToAlgebraic(this.selectedSquare.row, this.selectedSquare.col);
+            const moves = this.chess.moves({ square: algebraicSquare, verbose: true });
+            
+            this.validMoves = moves.map(move => {
+                const { row, col } = this.algebraicToRowCol(move.to);
+                return { row, col, move };
+            });
         }
     }
     
@@ -341,10 +363,10 @@ class ChessGame {
     }
     
     highlightValidMoves() {
-        this.validMoves.forEach(move => {
-            const square = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
+        this.validMoves.forEach(({ row, col, move }) => {
+            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
             if (square) {
-                if (this.board[move.row][move.col]) {
+                if (move.captured) {
                     square.classList.add('capture-move');
                 } else {
                     square.classList.add('valid-move');
@@ -358,51 +380,40 @@ class ChessGame {
     }
     
     makeMove(fromRow, fromCol, toRow, toCol) {
-        const piece = this.board[fromRow][fromCol];
-        const capturedPiece = this.board[toRow][toCol];
+        if (!this.chess) return;
         
-        if (capturedPiece) {
-            const capturedColor = capturedPiece === capturedPiece.toUpperCase() ? 'white' : 'black';
-            this.capturedPieces[capturedColor].push(capturedPiece);
-            this.updateCapturedPieces();
-            this.gameStats.captures++;
-            this.playSound('capture');
-        } else {
-            this.playSound('move');
+        const from = this.rowColToAlgebraic(fromRow, fromCol);
+        const to = this.rowColToAlgebraic(toRow, toCol);
+        
+        // Try to make the move
+        const move = this.chess.move({ from, to, promotion: 'q' });
+        
+        if (move) {
+            this.gameStats.totalMoves++;
+            
+            if (move.captured) {
+                this.gameStats.captures++;
+                this.updateCapturedPieces();
+                this.playSound('capture');
+            } else {
+                this.playSound('move');
+            }
+            
+            this.lastMove = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } };
+            this.highlightLastMove();
+            
+            if (this.settings.enableAnimations) {
+                this.animateMove(fromRow, fromCol, toRow, toCol);
+            }
+            
+            this.updateDisplay();
+            this.updatePieces();
+            this.checkGameState();
         }
-        
-        this.board[toRow][toCol] = piece;
-        this.board[fromRow][fromCol] = null;
-        
-        const moveNotation = this.getMoveNotation(fromRow, fromCol, toRow, toCol, piece, capturedPiece);
-        this.moveHistory.push({
-            from: { row: fromRow, col: fromCol },
-            to: { row: toRow, col: toCol },
-            piece: piece,
-            captured: capturedPiece,
-            notation: moveNotation,
-            timestamp: Date.now()
-        });
-        
-        this.gameStats.totalMoves++;
-        
-        this.lastMove = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } };
-        this.highlightLastMove();
-        
-        if (this.settings.enableAnimations) {
-            this.animateMove(fromRow, fromCol, toRow, toCol);
-        }
-        
-        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
-        
-        this.updateDisplay();
-        this.updatePieces();
-        
-        this.checkGameState();
     }
     
     makeAIMove() {
-        if (this.gameState !== 'playing') return;
+        if (!this.chess || this.chess.isGameOver()) return;
         
         const boardElement = document.getElementById('chessBoard');
         boardElement.classList.add('thinking');
@@ -414,41 +425,51 @@ class ChessGame {
         }[this.settings.difficulty] || 1000;
         
         setTimeout(() => {
-            // Simple AI move - just make a random valid move
-            const allMoves = this.getAllValidMovesForPlayer(this.currentPlayer);
+            let move = null;
             
-            if (allMoves.length > 0) {
-                const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
-                this.makeMove(randomMove.from.row, randomMove.from.col, randomMove.to.row, randomMove.to.col);
+            if (this.engine) {
+                // Use the enhanced AI engine
+                move = this.engine.getBestMove();
+            } else {
+                // Fallback to random move
+                const moves = this.chess.moves({ verbose: true });
+                if (moves.length > 0) {
+                    move = moves[Math.floor(Math.random() * moves.length)];
+                }
+            }
+            
+            if (move) {
+                const chessMove = this.chess.move(move);
+                
+                if (chessMove) {
+                    const { row: fromRow, col: fromCol } = this.algebraicToRowCol(chessMove.from);
+                    const { row: toRow, col: toCol } = this.algebraicToRowCol(chessMove.to);
+                    
+                    this.gameStats.totalMoves++;
+                    
+                    if (chessMove.captured) {
+                        this.gameStats.captures++;
+                        this.updateCapturedPieces();
+                        this.playSound('capture');
+                    } else {
+                        this.playSound('move');
+                    }
+                    
+                    this.lastMove = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } };
+                    this.highlightLastMove();
+                    
+                    if (this.settings.enableAnimations) {
+                        this.animateMove(fromRow, fromCol, toRow, toCol);
+                    }
+                    
+                    this.updateDisplay();
+                    this.updatePieces();
+                    this.checkGameState();
+                }
             }
             
             boardElement.classList.remove('thinking');
         }, thinkingTime);
-    }
-    
-    getAllValidMovesForPlayer(player) {
-        const moves = [];
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                if (piece && this.isPieceOwnedByPlayer(piece, player)) {
-                    const pieceMoves = this.getValidMoves(row, col);
-                    pieceMoves.forEach(move => {
-                        moves.push({
-                            from: { row, col },
-                            to: move,
-                            piece: piece
-                        });
-                    });
-                }
-            }
-        }
-        return moves;
-    }
-    
-    isPieceOwnedByPlayer(piece, player) {
-        const isWhitePiece = piece === piece.toUpperCase();
-        return (player === 'white' && isWhitePiece) || (player === 'black' && !isWhitePiece);
     }
     
     animateMove(fromRow, fromCol, toRow, toCol) {
@@ -460,7 +481,7 @@ class ChessGame {
                 piece.classList.add('piece-moved');
                 setTimeout(() => {
                     piece.classList.remove('piece-moved');
-                }, 600);
+                }, 800);
             }
         }
     }
@@ -476,240 +497,50 @@ class ChessGame {
         }
     }
     
-    // Basic chess move validation
-    getValidMoves(row, col) {
-        const piece = this.board[row][col];
-        if (!piece) return [];
-        
-        const moves = [];
-        const isWhite = piece === piece.toUpperCase();
-        const pieceType = piece.toLowerCase();
-        
-        switch (pieceType) {
-            case 'p':
-                moves.push(...this.getPawnMoves(row, col, isWhite));
-                break;
-            case 'r':
-                moves.push(...this.getRookMoves(row, col));
-                break;
-            case 'n':
-                moves.push(...this.getKnightMoves(row, col));
-                break;
-            case 'b':
-                moves.push(...this.getBishopMoves(row, col));
-                break;
-            case 'q':
-                moves.push(...this.getQueenMoves(row, col));
-                break;
-            case 'k':
-                moves.push(...this.getKingMoves(row, col));
-                break;
-        }
-        
-        return moves.filter(move => this.isSquareValid(move.row, move.col) && 
-                                  this.canMoveTo(row, col, move.row, move.col));
-    }
-    
-    getPawnMoves(row, col, isWhite) {
-        const moves = [];
-        const direction = isWhite ? -1 : 1;
-        const startRow = isWhite ? 6 : 1;
-        
-        // Move forward one square
-        const nextRow = row + direction;
-        if (this.isSquareValid(nextRow, col) && !this.board[nextRow][col]) {
-            moves.push({ row: nextRow, col });
-            
-            // Move forward two squares from starting position
-            if (row === startRow) {
-                const doubleRow = row + 2 * direction;
-                if (this.isSquareValid(doubleRow, col) && !this.board[doubleRow][col]) {
-                    moves.push({ row: doubleRow, col });
-                }
-            }
-        }
-        
-        // Capture diagonally
-        [-1, 1].forEach(colOffset => {
-            const captureRow = row + direction;
-            const captureCol = col + colOffset;
-            if (this.isSquareValid(captureRow, captureCol) && 
-                this.board[captureRow][captureCol] && 
-                this.isOpponentPiece(this.board[captureRow][captureCol], isWhite)) {
-                moves.push({ row: captureRow, col: captureCol });
-            }
-        });
-        
-        return moves;
-    }
-    
-    getRookMoves(row, col) {
-        const moves = [];
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-        
-        directions.forEach(([dRow, dCol]) => {
-            for (let i = 1; i < 8; i++) {
-                const newRow = row + dRow * i;
-                const newCol = col + dCol * i;
-                
-                if (!this.isSquareValid(newRow, newCol)) break;
-                
-                const targetPiece = this.board[newRow][newCol];
-                if (!targetPiece) {
-                    moves.push({ row: newRow, col: newCol });
-                } else {
-                    if (this.isOpponentPiece(targetPiece, this.board[row][col] === this.board[row][col].toUpperCase())) {
-                        moves.push({ row: newRow, col: newCol });
-                    }
-                    break;
-                }
-            }
-        });
-        
-        return moves;
-    }
-    
-    getKnightMoves(row, col) {
-        const moves = [];
-        const knightMoves = [
-            [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-            [1, -2], [1, 2], [2, -1], [2, 1]
-        ];
-        
-        knightMoves.forEach(([dRow, dCol]) => {
-            const newRow = row + dRow;
-            const newCol = col + dCol;
-            
-            if (this.isSquareValid(newRow, newCol)) {
-                const targetPiece = this.board[newRow][newCol];
-                if (!targetPiece || this.isOpponentPiece(targetPiece, this.board[row][col] === this.board[row][col].toUpperCase())) {
-                    moves.push({ row: newRow, col: newCol });
-                }
-            }
-        });
-        
-        return moves;
-    }
-    
-    getBishopMoves(row, col) {
-        const moves = [];
-        const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-        
-        directions.forEach(([dRow, dCol]) => {
-            for (let i = 1; i < 8; i++) {
-                const newRow = row + dRow * i;
-                const newCol = col + dCol * i;
-                
-                if (!this.isSquareValid(newRow, newCol)) break;
-                
-                const targetPiece = this.board[newRow][newCol];
-                if (!targetPiece) {
-                    moves.push({ row: newRow, col: newCol });
-                } else {
-                    if (this.isOpponentPiece(targetPiece, this.board[row][col] === this.board[row][col].toUpperCase())) {
-                        moves.push({ row: newRow, col: newCol });
-                    }
-                    break;
-                }
-            }
-        });
-        
-        return moves;
-    }
-    
-    getQueenMoves(row, col) {
-        return [...this.getRookMoves(row, col), ...this.getBishopMoves(row, col)];
-    }
-    
-    getKingMoves(row, col) {
-        const moves = [];
-        const kingMoves = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],           [0, 1],
-            [1, -1],  [1, 0],  [1, 1]
-        ];
-        
-        kingMoves.forEach(([dRow, dCol]) => {
-            const newRow = row + dRow;
-            const newCol = col + dCol;
-            
-            if (this.isSquareValid(newRow, newCol)) {
-                const targetPiece = this.board[newRow][newCol];
-                if (!targetPiece || this.isOpponentPiece(targetPiece, this.board[row][col] === this.board[row][col].toUpperCase())) {
-                    moves.push({ row: newRow, col: newCol });
-                }
-            }
-        });
-        
-        return moves;
-    }
-    
-    isSquareValid(row, col) {
-        return row >= 0 && row < 8 && col >= 0 && col < 8;
-    }
-    
-    canMoveTo(fromRow, fromCol, toRow, toCol) {
-        const piece = this.board[fromRow][fromCol];
-        const targetPiece = this.board[toRow][toCol];
-        
-        if (!piece) return false;
-        
-        // Cannot capture own piece
-        if (targetPiece && !this.isOpponentPiece(targetPiece, piece === piece.toUpperCase())) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    isOpponentPiece(piece, isWhitePlayer) {
-        const isPieceWhite = piece === piece.toUpperCase();
-        return isWhitePlayer ? !isPieceWhite : isPieceWhite;
-    }
-    
-    isPieceOwnedByCurrentPlayer(piece) {
-        const isWhitePiece = piece === piece.toUpperCase();
-        return (this.currentPlayer === 'white' && isWhitePiece) || 
-               (this.currentPlayer === 'black' && !isWhitePiece);
-    }
-    
-    getMoveNotation(fromRow, fromCol, toRow, toCol, piece, captured) {
-        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-        
-        const toSquare = files[toCol] + ranks[toRow];
-        
-        let notation = '';
-        
-        if (piece.toLowerCase() !== 'p') {
-            notation += piece.toUpperCase();
-        }
-        
-        if (captured) {
-            if (piece.toLowerCase() === 'p') {
-                notation += files[fromCol];
-            }
-            notation += 'x';
-        }
-        
-        notation += toSquare;
-        
-        return notation;
-    }
-    
     updateDisplay() {
-        document.getElementById('currentTurn').textContent = 
-            this.currentPlayer.charAt(0).toUpperCase() + this.currentPlayer.slice(1);
+        if (this.chess) {
+            const turn = this.chess.turn() === 'w' ? 'White' : 'Black';
+            document.getElementById('currentTurn').textContent = turn;
+            
+            // Update check status
+            if (this.chess.inCheck()) {
+                this.gameStats.checks++;
+                this.highlightKingInCheck();
+            } else {
+                this.clearCheckHighlight();
+            }
+        }
         
         this.updateMoveHistory();
+        this.updateGameStats();
         
-        document.getElementById('gameMode').textContent = 
-            this.gameMode === 'ai' ? 'vs AI' : 'vs Human';
-        
+        document.getElementById('gameMode').textContent = this.gameMode === 'ai' ? 'vs AI' : 'vs Human';
         document.getElementById('difficulty').textContent = 
             this.settings.difficulty.charAt(0).toUpperCase() + this.settings.difficulty.slice(1);
+    }
+    
+    highlightKingInCheck() {
+        if (!this.chess || !this.chess.inCheck()) return;
         
-        this.updateGameStats();
+        const kingColor = this.chess.turn();
+        const board = this.chess.board();
+        
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = board[row][col];
+                if (piece && piece.type === 'k' && piece.color === kingColor) {
+                    this.highlightSquare(row, col, 'in-check');
+                    this.playSound('check');
+                    break;
+                }
+            }
+        }
+    }
+    
+    clearCheckHighlight() {
+        document.querySelectorAll('.in-check').forEach(square => {
+            square.classList.remove('in-check');
+        });
     }
     
     updateGameStats() {
@@ -744,20 +575,24 @@ class ChessGame {
         const moveList = document.getElementById('moveList');
         moveList.innerHTML = '';
         
-        for (let i = 0; i < this.moveHistory.length; i += 2) {
-            const moveItem = document.createElement('div');
-            moveItem.className = 'move-item';
+        if (this.chess) {
+            const history = this.chess.history();
             
-            const moveNumber = Math.floor(i / 2) + 1;
-            const whiteMove = this.moveHistory[i];
-            const blackMove = this.moveHistory[i + 1];
-            
-            moveItem.innerHTML = `
-                <span class="move-number">${moveNumber}.</span>
-                <span>${whiteMove.notation} ${blackMove ? blackMove.notation : ''}</span>
-            `;
-            
-            moveList.appendChild(moveItem);
+            for (let i = 0; i < history.length; i += 2) {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+                
+                const moveNumber = Math.floor(i / 2) + 1;
+                const whiteMove = history[i];
+                const blackMove = history[i + 1];
+                
+                moveItem.innerHTML = `
+                    <span class="move-number">${moveNumber}.</span>
+                    <span>${whiteMove || ''} ${blackMove || ''}</span>
+                `;
+                
+                moveList.appendChild(moveItem);
+            }
         }
         
         moveList.scrollTop = moveList.scrollHeight;
@@ -767,95 +602,86 @@ class ChessGame {
         const topCaptured = document.getElementById('topCaptured');
         const bottomCaptured = document.getElementById('bottomCaptured');
         
-        const playerCaptured = this.playerColor === 'white' ? 'black' : 'white';
-        const opponentCaptured = this.playerColor === 'white' ? 'white' : 'black';
-        
-        topCaptured.innerHTML = this.capturedPieces[opponentCaptured]
-            .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece)}</span>`)
-            .join('');
-        
-        bottomCaptured.innerHTML = this.capturedPieces[playerCaptured]
-            .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece)}</span>`)
-            .join('');
+        if (this.chess) {
+            const history = this.chess.history({ verbose: true });
+            const whiteCaptured = [];
+            const blackCaptured = [];
+            
+            history.forEach(move => {
+                if (move.captured) {
+                    if (move.color === 'w') {
+                        blackCaptured.push(move.captured);
+                    } else {
+                        whiteCaptured.push(move.captured);
+                    }
+                }
+            });
+            
+            const playerCaptured = this.playerColor === 'white' ? blackCaptured : whiteCaptured;
+            const opponentCaptured = this.playerColor === 'white' ? whiteCaptured : blackCaptured;
+            
+            topCaptured.innerHTML = opponentCaptured
+                .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece)}</span>`)
+                .join('');
+            
+            bottomCaptured.innerHTML = playerCaptured
+                .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece.toUpperCase())}</span>`)
+                .join('');
+        }
     }
     
     checkGameState() {
-        const currentPlayerMoves = this.getAllValidMovesForPlayer(this.currentPlayer);
+        if (!this.chess) return;
         
-        if (currentPlayerMoves.length === 0) {
-            // For now, just mark as stalemate - proper checkmate detection would require more logic
-            this.gameState = 'stalemate';
+        if (this.chess.isGameOver()) {
             this.gameStats.endTime = Date.now();
-            this.showGameOver('Draw', 'stalemate');
+            
+            let winner = 'Draw';
+            let reason = 'unknown';
+            
+            if (this.chess.isCheckmate()) {
+                winner = this.chess.turn() === 'w' ? 'Black' : 'White';
+                reason = 'checkmate';
+            } else if (this.chess.isStalemate()) {
+                reason = 'stalemate';
+            } else if (this.chess.isDraw()) {
+                reason = 'draw';
+            }
+            
+            this.gameState = 'ended';
+            this.showGameOver(winner, reason);
             this.playSound('gameOver');
-        } else {
-            this.gameState = 'playing';
         }
     }
     
     showGameOver(winner, reason) {
-        const gameOverElement = document.createElement('div');
-        gameOverElement.className = 'game-over';
+        const gameOverModal = document.getElementById('gameOverModal');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        
+        gameOverTitle.textContent = winner === 'Draw' ? 'Draw!' : `${winner} Wins!`;
         
         const reasonText = {
             'checkmate': 'by Checkmate',
             'stalemate': 'by Stalemate',
+            'draw': 'by Draw',
             'timeout': 'by Timeout',
             'resignation': 'by Resignation'
         }[reason] || '';
         
+        gameOverMessage.textContent = `Game ended ${reasonText}`;
+        
+        // Update final stats
         const gameTime = this.gameStats.endTime ? 
             Math.floor((this.gameStats.endTime - this.gameStats.startTime) / 1000) : 0;
         const minutes = Math.floor(gameTime / 60);
         const seconds = gameTime % 60;
         
-        gameOverElement.innerHTML = `
-            <div class="game-over-content">
-                <h2>Game Over</h2>
-                <p>${winner === 'Draw' ? 'Draw' : winner + ' wins'} ${reasonText}</p>
-                <div class="game-stats">
-                    <p>Total Moves: ${this.gameStats.totalMoves}</p>
-                    <p>Captures: ${this.gameStats.captures}</p>
-                    <p>Checks: ${this.gameStats.checks}</p>
-                    <p>Game Time: ${minutes}:${seconds.toString().padStart(2, '0')}</p>
-                </div>
-                <div class="game-over-actions">
-                    <button class="btn btn-primary" onclick="game.newGame()">New Game</button>
-                    <button class="btn btn-secondary" onclick="game.analyzeGame()">Analyze</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(gameOverElement);
-    }
-    
-    analyzeGame() {
-        const analysis = {
-            totalMoves: this.gameStats.totalMoves,
-            captures: this.gameStats.captures,
-            checks: this.gameStats.checks,
-            averageTimePerMove: this.gameStats.endTime ? 
-                (this.gameStats.endTime - this.gameStats.startTime) / this.gameStats.totalMoves : 0,
-            openingMoves: this.moveHistory.slice(0, 10).map(m => m.notation).join(' '),
-            longestSequence: this.findLongestSequenceWithoutCapture()
-        };
+        document.getElementById('finalMoves').textContent = this.gameStats.totalMoves;
+        document.getElementById('finalTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        document.getElementById('finalCaptures').textContent = this.gameStats.captures;
         
-        alert(`Game Analysis:\n\nTotal Moves: ${analysis.totalMoves}\nCaptures: ${analysis.captures}\nChecks: ${analysis.checks}\nAverage Time per Move: ${Math.round(analysis.averageTimePerMove / 1000)}s\nOpening: ${analysis.openingMoves}\nLongest Sequence without Capture: ${analysis.longestSequence} moves`);
-    }
-    
-    findLongestSequenceWithoutCapture() {
-        let maxSequence = 0;
-        let currentSequence = 0;
-        
-        for (const move of this.moveHistory) {
-            if (move.captured) {
-                maxSequence = Math.max(maxSequence, currentSequence);
-                currentSequence = 0;
-            } else {
-                currentSequence++;
-            }
-        }
-        
-        return Math.max(maxSequence, currentSequence);
+        gameOverModal.style.display = 'flex';
     }
     
     flipBoard() {
@@ -899,17 +725,18 @@ class ChessGame {
     }
     
     newGame() {
-        const gameOverElement = document.querySelector('.game-over');
-        if (gameOverElement) {
-            gameOverElement.remove();
+        // Close any open modals
+        document.getElementById('gameOverModal').style.display = 'none';
+        
+        // Reset chess.js instance
+        if (this.chess) {
+            this.chess.reset();
         }
         
-        this.board = this.initializeBoard();
+        // Reset game state
         this.currentPlayer = 'white';
         this.selectedSquare = null;
         this.validMoves = [];
-        this.moveHistory = [];
-        this.capturedPieces = { white: [], black: [] };
         this.gameState = 'playing';
         this.lastMove = null;
         
@@ -925,6 +752,7 @@ class ChessGame {
         this.updateDisplay();
         this.updateCapturedPieces();
         this.clearSelection();
+        this.clearCheckHighlight();
         
         document.querySelectorAll('.last-move').forEach(square => {
             square.classList.remove('last-move');
@@ -981,6 +809,7 @@ class ChessGame {
     }
     
     bindEvents() {
+        // Game control buttons
         document.getElementById('newGameBtn').addEventListener('click', () => {
             this.newGame();
         });
@@ -993,6 +822,7 @@ class ChessGame {
             this.showSettings();
         });
         
+        // Settings modal events
         document.getElementById('closeSettings').addEventListener('click', () => {
             this.hideSettings();
         });
@@ -1011,6 +841,7 @@ class ChessGame {
             }
         });
         
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             this.handleKeyPress(e);
         });
@@ -1046,21 +877,18 @@ class ChessGame {
     showSettings() {
         const modal = document.getElementById('settingsModal');
         
+        // Populate current settings
         document.getElementById('gameModeSelect').value = this.gameMode;
         document.getElementById('difficultySelect').value = this.settings.difficulty;
         document.getElementById('playerColorSelect').value = this.playerColor;
         document.getElementById('boardThemeSelect').value = this.settings.boardTheme;
         document.getElementById('pieceStyleSelect').value = this.settings.pieceStyle;
         
-        const soundToggle = document.getElementById('enableSoundToggle');
-        const animationsToggle = document.getElementById('enableAnimationsToggle');
-        const legalMovesToggle = document.getElementById('showLegalMovesToggle');
-        const dragDropToggle = document.getElementById('enableDragDropToggle');
-        
-        if (soundToggle) soundToggle.checked = this.settings.enableSound;
-        if (animationsToggle) animationsToggle.checked = this.settings.enableAnimations;
-        if (legalMovesToggle) legalMovesToggle.checked = this.settings.showLegalMoves;
-        if (dragDropToggle) dragDropToggle.checked = this.settings.enableDragDrop;
+        // Update checkboxes
+        document.getElementById('enableSoundToggle').checked = this.settings.enableSound;
+        document.getElementById('enableAnimationsToggle').checked = this.settings.enableAnimations;
+        document.getElementById('showLegalMovesToggle').checked = this.settings.showLegalMoves;
+        document.getElementById('enableDragDropToggle').checked = this.settings.enableDragDrop;
         
         modal.style.display = 'flex';
     }
@@ -1076,18 +904,12 @@ class ChessGame {
             difficulty: document.getElementById('difficultySelect').value,
             playerColor: document.getElementById('playerColorSelect').value,
             boardTheme: document.getElementById('boardThemeSelect').value,
-            pieceStyle: document.getElementById('pieceStyleSelect').value
+            pieceStyle: document.getElementById('pieceStyleSelect').value,
+            enableSound: document.getElementById('enableSoundToggle').checked,
+            enableAnimations: document.getElementById('enableAnimationsToggle').checked,
+            showLegalMoves: document.getElementById('showLegalMovesToggle').checked,
+            enableDragDrop: document.getElementById('enableDragDropToggle').checked
         };
-        
-        const soundToggle = document.getElementById('enableSoundToggle');
-        const animationsToggle = document.getElementById('enableAnimationsToggle');
-        const legalMovesToggle = document.getElementById('showLegalMovesToggle');
-        const dragDropToggle = document.getElementById('enableDragDropToggle');
-        
-        if (soundToggle) newSettings.enableSound = soundToggle.checked;
-        if (animationsToggle) newSettings.enableAnimations = animationsToggle.checked;
-        if (legalMovesToggle) newSettings.showLegalMoves = legalMovesToggle.checked;
-        if (dragDropToggle) newSettings.enableDragDrop = dragDropToggle.checked;
         
         this.applySettings(newSettings);
         this.hideSettings();
@@ -1095,10 +917,11 @@ class ChessGame {
     
     exportGame() {
         const gameData = {
-            moves: this.moveHistory.map(m => m.notation),
-            result: this.gameState,
+            pgn: this.chess ? this.chess.pgn() : '',
+            fen: this.chess ? this.chess.fen() : '',
             settings: this.settings,
-            stats: this.gameStats
+            stats: this.gameStats,
+            result: this.gameState
         };
         
         const blob = new Blob([JSON.stringify(gameData, null, 2)], { type: 'application/json' });
@@ -1109,23 +932,16 @@ class ChessGame {
         a.click();
         URL.revokeObjectURL(url);
     }
-    
-    importGame(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const gameData = JSON.parse(e.target.result);
-                console.log('Game imported:', gameData);
-            } catch (error) {
-                alert('Error importing game: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
 }
 
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Make sure chess.js is loaded
+    if (typeof Chess === 'undefined') {
+        console.error('Chess.js library not loaded!');
+        return;
+    }
+    
     window.game = new ChessGame();
     
     // Update game statistics every second
