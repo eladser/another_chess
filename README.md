@@ -1,1 +1,246 @@
-# ♔ Another Chess - Advanced Chess Game\n\n> A modern, feature-rich chess game with advanced AI, beautiful design, and comprehensive functionality.\n\n## ✨ Features\n\n### 🧠 **Advanced AI Engine**\n- **Multiple Difficulty Levels**: Easy (800-1000), Medium (1200-1400), Hard (1600-1800), Expert (2000+)\n- **Smart Move Evaluation**: Uses minimax algorithm with alpha-beta pruning\n- **Position Analysis**: Advanced piece-square tables and positional evaluation\n- **Thinking Time**: Realistic AI thinking simulation\n- **Opening Book**: Strategic opening moves\n\n### 🎮 **Enhanced Gameplay**\n- **Drag & Drop**: Intuitive piece movement with visual feedback\n- **Click to Move**: Traditional click-to-select gameplay\n- **Move Validation**: Complete chess rule enforcement\n- **Special Moves**: Castling, en passant, pawn promotion\n- **Undo/Redo**: Take back moves for analysis\n- **Game Analysis**: Real-time position evaluation\n\n### 🎨 **Beautiful Design**\n- **Modern UI**: Clean, responsive interface with animations\n- **Multiple Themes**: Classic, Wooden, Marble, Glass board themes\n- **Piece Designs**: High-quality Unicode chess pieces with shadows\n- **Visual Feedback**: Highlighted moves, captures, and checks\n- **Responsive Layout**: Works on desktop, tablet, and mobile\n\n### 🎵 **Audio & Visual Effects**\n- **Sound Effects**: Move, capture, check, checkmate sounds\n- **Animations**: Smooth piece movements and transitions\n- **Highlights**: Last move, valid moves, king in check\n- **Visual Cues**: Drag targets, selected pieces, possible moves\n\n### 📊 **Game Statistics**\n- **Move History**: Complete move notation with navigation\n- **Captured Pieces**: Visual display of taken pieces\n- **Game Stats**: Moves, captures, checks, game time\n- **Accuracy Tracking**: Move quality analysis\n- **Performance Metrics**: Real-time game evaluation\n\n### ⚙️ **Customization**\n- **Player Settings**: Choose your color (White/Black/Random)\n- **Board Themes**: 4 different visual styles\n- **Audio Controls**: Enable/disable sounds with volume control\n- **Visual Options**: Coordinates, move highlights, animations\n- **Difficulty Scaling**: Adjust AI strength to your level\n\n### 💾 **Game Management**\n- **Save/Load**: Persistent settings and preferences\n- **Export PGN**: Download games in standard chess notation\n- **New Game**: Quick restart with current settings\n- **Game Over**: Detailed end-game statistics\n\n## 🚀 Quick Start\n\n1. **Play Online**: Visit the [live demo](https://eladser.github.io/another_chess/)\n2. **Download**: Clone or download the repository\n3. **Open**: Launch `index.html` in your browser\n4. **Play**: Start playing immediately!\n\n## 🎯 How to Play\n\n### Basic Controls\n- **Select Piece**: Click on a piece to select it\n- **Move Piece**: Click on a highlighted square or drag & drop\n- **Cancel Selection**: Right-click or click elsewhere\n- **Undo Move**: Use the Undo button to take back moves\n\n### Game Features\n- **AI Difficulty**: Adjust in settings (Easy to Expert)\n- **Board Flip**: Rotate board to play from either side\n- **Move Hints**: Valid moves are highlighted in green\n- **Capture Hints**: Possible captures shown in red\n- **Check Warning**: King flashes red when in check\n\n### Special Moves\n- **Castling**: Move king 2 squares toward rook\n- **En Passant**: Capture opponent's pawn in passing\n- **Promotion**: Choose piece when pawn reaches end\n\n## 🛠️ Technical Features\n\n### Chess Engine\n- **Chess.js Integration**: Robust move validation and game logic\n- **Minimax Algorithm**: Advanced AI decision making\n- **Alpha-Beta Pruning**: Optimized search performance\n- **Transposition Tables**: Position caching for speed\n- **Iterative Deepening**: Progressive search depth\n\n### User Interface\n- **Responsive Design**: CSS Grid and Flexbox layout\n- **Modern Styling**: CSS3 animations and effects\n- **Accessibility**: Keyboard navigation and screen readers\n- **Cross-Platform**: Works on all modern browsers\n\n### Performance\n- **Optimized Rendering**: Efficient DOM updates\n- **Lazy Loading**: Resources loaded as needed\n- **Memory Management**: Efficient data structures\n- **Smooth Animations**: 60fps animations using CSS transforms\n\n## 🎨 Customization\n\n### Board Themes\n- **Classic**: Traditional brown and beige\n- **Wooden**: Rich wood textures\n- **Marble**: Elegant stone appearance\n- **Glass**: Modern translucent design\n\n### Difficulty Levels\n- **Easy (900)**: 2-ply search, 30% randomness\n- **Medium (1400)**: 3-ply search, 10% randomness\n- **Hard (1800)**: 4-ply search, 5% randomness\n- **Expert (2200)**: 5-ply search, 2% randomness\n\n### Audio Settings\n- **Volume Control**: 0-100% with slider\n- **Sound Types**: Move, capture, check, checkmate, castle\n- **Audio Generation**: Web Audio API for consistent sounds\n\n## 📱 Mobile Support\n\n- **Touch Controls**: Tap to select, tap to move\n- **Drag & Drop**: Touch and drag pieces\n- **Responsive Layout**: Optimized for mobile screens\n- **Gesture Support**: Pinch to zoom, swipe to navigate\n\n## 🔧 Development\n\n### File Structure\n```\nchess-game/\n├── index.html          # Main HTML file\n├── styles.css          # Styling and themes\n├── game.js            # Main game logic\n├── chess-engine.js    # AI engine\n├── LICENSE            # MIT License\n└── README.md          # Documentation\n```\n\n### Key Components\n- **ChessGame Class**: Main game controller\n- **ChessEngine Class**: AI and move validation\n- **UI Components**: Modals, settings, statistics\n- **Event Handlers**: Mouse, keyboard, drag & drop\n\n## 🤝 Contributing\n\nContributions are welcome! Here's how to help:\n\n1. **Fork** the repository\n2. **Create** a feature branch\n3. **Make** your changes\n4. **Test** thoroughly\n5. **Submit** a pull request\n\n### Development Guidelines\n- Follow existing code style\n- Add comments for complex logic\n- Test on multiple browsers\n- Update documentation as needed\n\n## 📝 License\n\nThis project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.\n\n## 🙏 Acknowledgments\n\n- **Chess.js**: Excellent chess move validation library\n- **Unicode Chess Pieces**: Beautiful piece symbols\n- **Web Audio API**: For sound generation\n- **CSS Grid**: For responsive board layout\n\n## 🐛 Bug Reports\n\nFound a bug? Please [open an issue](https://github.com/eladser/another_chess/issues) with:\n- Description of the problem\n- Steps to reproduce\n- Expected vs actual behavior\n- Browser and OS information\n\n## 🔮 Future Features\n\n- [ ] Online multiplayer\n- [ ] Tournament mode\n- [ ] Puzzle training\n- [ ] Opening trainer\n- [ ] Analysis board\n- [ ] Time controls\n- [ ] Chess variants\n- [ ] Player profiles\n\n## 📊 Stats\n\n- **Lines of Code**: ~2,000+\n- **Features**: 25+ game features\n- **Themes**: 4 visual themes\n- **Difficulty Levels**: 4 AI levels\n- **Supported Browsers**: All modern browsers\n\n---\n\n**Made with ❤️ by the Chess Community**\n\n*Play, Learn, and Enjoy Chess!* ♟️"
+# 🎮 Another Chess - Enhanced Chess Game
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Chess.js](https://img.shields.io/badge/Chess.js-0.10.3-blue.svg)](https://github.com/jhlywa/chess.js)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-green.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Responsive](https://img.shields.io/badge/Responsive-Yes-brightgreen.svg)](https://github.com/eladser/another_chess)
+
+A modern, feature-rich chess game built with vanilla JavaScript featuring an advanced AI engine, beautiful themes, and comprehensive gameplay features.
+
+## 🚀 **Major Version 2.0 Updates**
+
+### ✅ **Fixed Major Issues**
+- **🔧 Movement Bug Fixed**: Pieces now move properly from game start
+- **🎯 Enhanced AI**: Smarter opponent with 4 difficulty levels
+- **🔍 Better Engine**: Improved check detection, game win conditions, and move validation
+- **🎨 Beautiful Pieces**: Enhanced piece designs with better visual effects
+- **🖱️ Full Drag & Drop**: Complete drag and drop support with visual feedback
+- **💎 Better Design**: Modern UI with improved animations and responsiveness
+- **🗂️ Fixed Coordinates**: Proper a-h and 1-8 coordinate display
+
+## ✨ Features
+
+### 🤖 **Advanced AI System**
+- **4 Difficulty Levels**: Easy (900), Medium (1400), Hard (1800), Expert (2200)
+- **Realistic Play**: AI makes human-like decisions with occasional blunders on easier levels
+- **Smart Evaluation**: Advanced position evaluation with piece-square tables
+- **Tactical Awareness**: Recognizes threats, captures, and tactical patterns
+- **Opening Book**: Varied opening play for interesting games
+
+### 🎨 **Beautiful Interface**
+- **4 Board Themes**: Classic, Wooden, Marble, Glass
+- **Smooth Animations**: Piece movements, highlights, and transitions
+- **Visual Feedback**: Move highlights, possible moves, check indicators
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **Dark Theme**: Modern dark interface with gradient backgrounds
+
+### 🎮 **Enhanced Gameplay**
+- **Click or Drag**: Choose your preferred way to move pieces
+- **Move Validation**: Proper chess rules enforcement
+- **Special Moves**: Castling, en passant, pawn promotion
+- **Game States**: Check, checkmate, stalemate detection
+- **Undo Function**: Take back moves when needed
+- **Board Flipping**: View from either perspective
+
+### 📊 **Game Analysis**
+- **Real-time Evaluation**: Position analysis with visual bar
+- **Move History**: Complete game record with algebraic notation
+- **Statistics Tracking**: Moves, captures, checks, accuracy
+- **Captured Pieces**: Visual display of taken pieces
+- **Game Timer**: Track your game duration
+
+### 🔊 **Audio & Settings**
+- **Sound Effects**: Move, capture, check, checkmate sounds
+- **Customizable Settings**: Adjust all preferences
+- **Coordinate Display**: Toggle a-h and 1-8 labels
+- **Move Indicators**: Show/hide possible moves
+- **Animation Control**: Enable/disable animations
+
+### 📱 **Mobile Optimized**
+- **Touch Controls**: Tap and drag on mobile devices
+- **Responsive Layout**: Adapts to any screen size
+- **Optimized Performance**: Smooth gameplay on all devices
+- **Accessible Design**: Screen reader friendly
+
+## 🎯 How to Play
+
+### **Basic Controls**
+1. **🖱️ Click to Move**: Click a piece, then click destination
+2. **🖱️ Drag & Drop**: Drag pieces to their destination
+3. **⌨️ Escape**: Cancel current selection
+4. **🖱️ Right-click**: Also cancels selection
+
+### **Special Moves**
+- **🏰 Castling**: Click king, then click 2 squares toward rook
+- **👻 En Passant**: Automatically available when legal
+- **👑 Promotion**: Choose piece when pawn reaches end
+
+### **Game Modes**
+- **🤖 vs AI**: Play against computer (4 difficulty levels)
+- **👥 Two Players**: Play with a friend (coming soon)
+- **🔍 Analysis**: Analyze positions (coming soon)
+
+## 🛠️ Technical Features
+
+### **Built With**
+- **Vanilla JavaScript**: No frameworks, pure performance
+- **Chess.js**: Robust chess logic and validation
+- **CSS Grid**: Modern responsive layout
+- **Web Audio API**: Generated sound effects
+- **LocalStorage**: Settings persistence
+
+### **AI Engine**
+- **Minimax Algorithm**: With alpha-beta pruning
+- **Iterative Deepening**: Progressively deeper search
+- **Transposition Table**: Avoid recalculating positions
+- **Move Ordering**: Optimize search efficiency
+- **Quiescence Search**: Tactical stability
+
+### **Performance**
+- **Optimized Rendering**: Efficient DOM updates
+- **Lazy Loading**: Features loaded as needed
+- **Memory Management**: Proper cleanup and garbage collection
+- **Mobile Optimized**: Touch-friendly interface
+
+## 🎪 Game Features
+
+### **Statistics**
+- Total moves played
+- Pieces captured
+- Checks given
+- Game duration
+- Move accuracy (coming soon)
+
+### **Export Options**
+- **PGN Export**: Save games in standard format
+- **Game Analysis**: Review your games
+- **Statistics Export**: Track your progress
+
+### **Accessibility**
+- **Keyboard Navigation**: Full keyboard support
+- **Screen Reader**: Proper ARIA labels
+- **High Contrast**: Support for high contrast mode
+- **Reduced Motion**: Respects motion preferences
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/eladser/another_chess.git
+```
+
+2. **Open in browser**
+```bash
+cd another_chess
+open index.html
+```
+
+3. **Or visit the live demo**
+[Play Another Chess](https://eladser.github.io/another_chess/)
+
+## 📝 Game Rules
+
+### **Objective**
+Checkmate your opponent's king by attacking it in a way that it cannot escape.
+
+### **How Pieces Move**
+- **♔ King**: One square in any direction
+- **♕ Queen**: Any number of squares in any direction
+- **♖ Rook**: Any number of squares horizontally or vertically
+- **♗ Bishop**: Any number of squares diagonally
+- **♘ Knight**: L-shaped: 2 squares in one direction, 1 perpendicular
+- **♙ Pawn**: One square forward (two on first move), captures diagonally
+
+### **Special Rules**
+- **Castling**: King and rook swap positions under specific conditions
+- **En Passant**: Capture pawn that just moved two squares
+- **Promotion**: Pawn reaching the end becomes any piece (usually queen)
+
+## 🔧 Development
+
+### **File Structure**
+```
+another_chess/
+├── index.html          # Main HTML file
+├── styles.css          # Enhanced styles
+├── game.js            # Main game logic
+├── chess-engine.js    # AI engine
+├── board-fixes.js     # Board enhancements
+└── README.md          # This file
+```
+
+### **Key Components**
+- **ChessGame**: Main game controller
+- **ChessEngine**: AI opponent logic
+- **Board Management**: Square and piece handling
+- **UI Controls**: Settings, modals, interactions
+
+## 🎨 Customization
+
+### **Themes**
+Easily add new board themes by extending the CSS theme system:
+
+```css
+.board-theme-custom .square.light-square {
+    background: #your-light-color;
+}
+
+.board-theme-custom .square.dark-square {
+    background: #your-dark-color;
+}
+```
+
+### **AI Difficulty**
+Adjust AI parameters in `chess-engine.js`:
+
+```javascript
+this.difficulties = {
+    'custom': {
+        depth: 4,
+        randomness: 0.1,
+        thinking: 1000,
+        blunderChance: 0.05
+    }
+};
+```
+
+## 🐛 Bug Reports
+
+Found a bug? Please report it on [GitHub Issues](https://github.com/eladser/another_chess/issues) with:
+- Browser and version
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots if applicable
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Chess.js**: Excellent chess logic library
+- **Chess community**: For feedback and suggestions
+- **Open source**: For making this possible
+
+## 📊 Stats
+
+- **Lines of Code**: ~2,500+
+- **Features**: 25+
+- **Supported Browsers**: All modern browsers
+- **Mobile Support**: Full
+- **Accessibility**: WCAG 2.1 compliant
+
+---
+
+**🎮 Ready to play? [Start a game now!](https://eladser.github.io/another_chess/)**
+
+*Made with ❤️ by chess enthusiasts, for chess enthusiasts.*
