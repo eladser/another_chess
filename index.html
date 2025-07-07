@@ -293,7 +293,7 @@
                     <h3>🎮 Controls</h3>
                     <ul>
                         <li><strong>🖱️ Click:</strong> Select a piece, then click destination square</li>
-                        <li><strong>🖱️ Drag & Drop:</strong> Drag pieces to move them (enhanced!)</li>
+                        <li><strong>🖱️ Drag & Drop:</strong> Drag pieces to move them (fully functional!)</li>
                         <li><strong>📱 Touch:</strong> Touch and drag pieces on mobile devices</li>
                         <li><strong>🖱️ Right-click:</strong> Cancel current selection</li>
                         <li><strong>⌨️ Escape:</strong> Cancel current selection</li>
@@ -362,7 +362,7 @@
         <div class="loading-content">
             <div class="loading-spinner" aria-hidden="true"></div>
             <div class="loading-text">🎮 Loading Enhanced Chess Engine...</div>
-            <div class="loading-subtext">Preparing AI, board, and enhanced features...</div>
+            <div class="loading-subtext">Preparing AI, board, and all features...</div>
         </div>
     </div>
 
@@ -375,22 +375,8 @@
     <script src="board-enhancements.js"></script>
     <script src="game-fixes.js"></script>
     <script src="drag-drop-fixes.js"></script>
+    <script src="chessjs-fixes.js"></script>
     
-    <!-- Service Worker for offline support -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('✅ SW registered: ', registration);
-                    })
-                    .catch((registrationError) => {
-                        console.log('❌ SW registration failed: ', registrationError);
-                    });
-            });
-        }
-    </script>
-
     <!-- Performance monitoring -->
     <script>
         // Basic performance monitoring
