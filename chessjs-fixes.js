@@ -315,7 +315,7 @@ function applyChessJSFixes() {
         };
     }
     
-    // Fix makeAIMove method
+    // Fix makeAIMove method - IMPROVED VERSION WITH PROPER MOVE FORMATTING
     const originalMakeAIMove = game.makeAIMove;
     game.makeAIMove = async function() {
         if (!this.chess || this.isGameOver()) {
@@ -362,12 +362,39 @@ function applyChessJSFixes() {
             if (move) {
                 console.log('🎯 AI selected move:', move);
                 
-                const engineMove = this.chess.move(move);
+                // FIX: Properly format the move object for chess.js
+                // The engine returns a move object with all properties, but chess.js.move() 
+                // expects either a simple object {from, to} or the SAN notation
+                let moveToExecute;
+                
+                // Check if move is already in the correct format
+                if (typeof move === 'string') {
+                    // SAN notation
+                    moveToExecute = move;
+                } else if (move.from && move.to) {
+                    // Move object format - extract only the essential properties
+                    moveToExecute = {
+                        from: move.from,
+                        to: move.to
+                    };
+                    
+                    // Add promotion if present
+                    if (move.promotion) {
+                        moveToExecute.promotion = move.promotion;
+                    }
+                } else {
+                    // If move doesn't have from/to, try to use SAN
+                    moveToExecute = move.san || move;
+                }
+                
+                console.log('🎯 Formatted move for execution:', moveToExecute);
+                
+                const engineMove = this.chess.move(moveToExecute);
                 
                 if (engineMove) {
-                    console.log('✅ AI move executed:', engineMove);
+                    console.log('✅ AI move executed successfully:', engineMove);
                     
-                    this.lastMove = { from: move.from, to: move.to };
+                    this.lastMove = { from: engineMove.from, to: engineMove.to };
                     this.gameStats.totalMoves++;
                     
                     // Update statistics
@@ -390,15 +417,85 @@ function applyChessJSFixes() {
                     // Check game state
                     this.checkGameState();
                 } else {
-                    console.log('❌ AI move failed to execute');
+                    console.log('❌ AI move failed to execute - invalid move format');
+                    console.log('❌ Original move:', move);
+                    console.log('❌ Formatted move:', moveToExecute);
+                    
+                    // Try fallback - use a random legal move
+                    console.log('🎲 Attempting fallback with random move...');
+                    const fallbackMoves = this.chess.moves({ verbose: true });
+                    if (fallbackMoves.length > 0) {
+                        const randomMove = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
+                        const fallbackResult = this.chess.move(randomMove);
+                        if (fallbackResult) {
+                            console.log('✅ Fallback move executed:', fallbackResult);
+                            this.lastMove = { from: fallbackResult.from, to: fallbackResult.to };
+                            this.gameStats.totalMoves++;
+                            this.playMoveSound(fallbackResult);
+                            this.updatePieces();
+                            this.updateDisplay();
+                            this.highlightLastMove();
+                            this.checkGameState();
+                        }
+                    }
                 }
             } else {
                 console.log('❌ AI could not find a move');
             }
         } catch (error) {
             console.error('❌ AI move error (fixed):', error);
+            
+            // Emergency fallback - make any legal move
+            try {
+                const emergencyMoves = this.chess.moves({ verbose: true });
+                if (emergencyMoves.length > 0) {
+                    const emergencyMove = emergencyMoves[0];
+                    const result = this.chess.move(emergencyMove);
+                    if (result) {
+                        console.log('🚨 Emergency move executed:', result);
+                        this.lastMove = { from: result.from, to: result.to };
+                        this.gameStats.totalMoves++;
+                        this.updatePieces();
+                        this.updateDisplay();
+                        this.highlightLastMove();
+                        this.checkGameState();
+                    }
+                }
+            } catch (emergencyError) {
+                console.error('❌ Emergency move also failed:', emergencyError);
+            }
         } finally {
             this.hideThinkingIndicator();
+        }
+    };
+    
+    // Add debugging function to help troubleshoot move format issues
+    game.debugMoveFormat = function(move) {
+        console.log('🔍 Move Debug Info:');
+        console.log('- Type:', typeof move);
+        console.log('- Keys:', Object.keys(move || {}));
+        console.log('- From:', move?.from);
+        console.log('- To:', move?.to);
+        console.log('- SAN:', move?.san);
+        console.log('- Promotion:', move?.promotion);
+        console.log('- Flags:', move?.flags);
+        console.log('- Full object:', move);
+        
+        // Test if the move would be valid
+        try {
+            const testMove = {
+                from: move?.from,
+                to: move?.to
+            };
+            if (move?.promotion) testMove.promotion = move.promotion;
+            
+            const isValid = this.chess.moves({ verbose: true }).some(m => 
+                m.from === testMove.from && m.to === testMove.to
+            );
+            
+            console.log('- Is valid format:', isValid);
+        } catch (e) {
+            console.log('- Validation error:', e.message);
         }
     };
     
