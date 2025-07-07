@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Another Chess - Modern Chess Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">♔ Another Chess</h1>
+            <div class="game-controls">
+                <button id="newGameBtn" class="btn btn-primary">New Game</button>
+                <button id="flipBoardBtn" class="btn btn-secondary">Flip Board</button>
+                <button id="settingsBtn" class="btn btn-secondary">Settings</button>
+            </div>
+        </header>
+
+        <main class="game-area">
+            <div class="game-info">
+                <div class="player-info">
+                    <div class="player" id="topPlayer">
+                        <div class="player-name">AI Opponent</div>
+                        <div class="captured-pieces" id="topCaptured"></div>
+                    </div>
+                </div>
+                
+                <div class="chess-board-container">
+                    <div class="board-wrapper">
+                        <div class="coordinates coordinates-left">
+                            <div class="coord">8</div>
+                            <div class="coord">7</div>
+                            <div class="coord">6</div>
+                            <div class="coord">5</div>
+                            <div class="coord">4</div>
+                            <div class="coord">3</div>
+                            <div class="coord">2</div>
+                            <div class="coord">1</div>
+                        </div>
+                        <div class="board-area">
+                            <div id="chessBoard" class="chess-board"></div>
+                            <div class="coordinates coordinates-bottom">
+                                <div class="coord">a</div>
+                                <div class="coord">b</div>
+                                <div class="coord">c</div>
+                                <div class="coord">d</div>
+                                <div class="coord">e</div>
+                                <div class="coord">f</div>
+                                <div class="coord">g</div>
+                                <div class="coord">h</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-info">
+                    <div class="player-info">
+                        <div class="player" id="bottomPlayer">
+                            <div class="player-name">You</div>
+                            <div class="captured-pieces" id="bottomCaptured"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-sidebar">
+                <div class="game-status">
+                    <div class="status-item">
+                        <span class="status-label">Turn:</span>
+                        <span id="currentTurn" class="status-value">White</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Mode:</span>
+                        <span id="gameMode" class="status-value">vs AI</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Difficulty:</span>
+                        <span id="difficulty" class="status-value">Medium</span>
+                    </div>
+                </div>
+
+                <div class="move-history">
+                    <h3>Move History</h3>
+                    <div id="moveList" class="move-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Game Settings</h2>
+                <button class="close-btn" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Game Mode:</label>
+                    <select id="gameModeSelect">
+                        <option value="ai">vs AI</option>
+                        <option value="human">vs Human</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>AI Difficulty:</label>
+                    <select id="difficultySelect">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Your Color:</label>
+                    <select id="playerColorSelect">
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Board Theme:</label>
+                    <select id="boardThemeSelect">
+                        <option value="classic">Classic</option>
+                        <option value="modern">Modern</option>
+                        <option value="dark">Dark</option>
+                        <option value="neon">Neon</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Piece Style:</label>
+                    <select id="pieceStyleSelect">
+                        <option value="classic">Classic</option>
+                        <option value="modern">Modern</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="applySettings" class="btn btn-primary">Apply Settings</button>
+                <button id="cancelSettings" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chess-engine.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
