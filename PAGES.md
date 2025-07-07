@@ -1,0 +1,1 @@
+# GitHub Pages\n\nThis repository uses GitHub Pages for deployment. The site is automatically deployed from the main branch.\n\n## Setup\n\n1. Go to repository Settings\n2. Scroll to Pages section\n3. Set Source to \"Deploy from a branch\"\n4. Select \"main\" branch\n5. Select \"/ (root)\" folder\n6. Save\n\nThe site will be available at: https://eladser.github.io/another_chess/"
