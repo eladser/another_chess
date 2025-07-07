@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Another Chess - Modern Chess Game</title>
+    <title>Another Chess - Advanced Chess Game</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♔</text></svg>">
-    <!-- Add chess.js library - using CDN -->
+    <!-- Chess.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
@@ -17,6 +17,7 @@
             <div class="game-controls">
                 <button id="newGameBtn" class="btn btn-primary">New Game</button>
                 <button id="flipBoardBtn" class="btn btn-secondary">Flip Board</button>
+                <button id="undoBtn" class="btn btn-secondary">Undo</button>
                 <button id="settingsBtn" class="btn btn-secondary">Settings</button>
                 <button id="helpBtn" class="btn btn-secondary">Help</button>
             </div>
@@ -26,14 +27,18 @@
             <div class="game-info">
                 <div class="player-info">
                     <div class="player" id="topPlayer">
-                        <div class="player-name">AI Opponent</div>
+                        <div class="player-header">
+                            <div class="player-name">AI Opponent</div>
+                            <div class="player-rating">★ <span id="aiRating">1400</span></div>
+                        </div>
                         <div class="captured-pieces" id="topCaptured"></div>
+                        <div class="player-time" id="topTime">∞</div>
                     </div>
                 </div>
                 
                 <div class="chess-board-container">
                     <div class="board-wrapper">
-                        <div class="coordinates coordinates-left">
+                        <div class="coordinates coordinates-left" id="leftCoords">
                             <div class="coord">8</div>
                             <div class="coord">7</div>
                             <div class="coord">6</div>
@@ -45,7 +50,7 @@
                         </div>
                         <div class="board-area">
                             <div id="chessBoard" class="chess-board"></div>
-                            <div class="coordinates coordinates-bottom">
+                            <div class="coordinates coordinates-bottom" id="bottomCoords">
                                 <div class="coord">a</div>
                                 <div class="coord">b</div>
                                 <div class="coord">c</div>
@@ -62,8 +67,12 @@
                 <div class="game-info">
                     <div class="player-info">
                         <div class="player" id="bottomPlayer">
-                            <div class="player-name">You</div>
+                            <div class="player-header">
+                                <div class="player-name">You</div>
+                                <div class="player-rating">★ <span id="playerRating">1200</span></div>
+                            </div>
                             <div class="captured-pieces" id="bottomCaptured"></div>
+                            <div class="player-time" id="bottomTime">∞</div>
                         </div>
                     </div>
                 </div>
@@ -104,7 +113,20 @@
                             <span class="stat-label">Checks:</span>
                             <span id="checks" class="stat-value">0</span>
                         </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Accuracy:</span>
+                            <span id="accuracy" class="stat-value">--</span>
+                        </div>
                     </div>
+                </div>
+
+                <div class="engine-analysis">
+                    <h3>Engine Analysis</h3>
+                    <div class="analysis-bar">
+                        <div class="eval-bar" id="evalBar"></div>
+                        <div class="eval-text" id="evalText">+0.0</div>
+                    </div>
+                    <div class="best-move" id="bestMove">Thinking...</div>
                 </div>
 
                 <div class="move-history">
@@ -113,6 +135,92 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Game Settings</h3>
+                    <div class="setting-item">
+                        <label for="difficultySelect">AI Difficulty:</label>
+                        <select id="difficultySelect">
+                            <option value="easy">Easy (800-1000)</option>
+                            <option value="medium" selected>Medium (1200-1400)</option>
+                            <option value="hard">Hard (1600-1800)</option>
+                            <option value="expert">Expert (2000+)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="playerColorSelect">Play as:</label>
+                        <select id="playerColorSelect">
+                            <option value="white" selected>White</option>
+                            <option value="black">Black</option>
+                            <option value="random">Random</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="boardThemeSelect">Board Theme:</label>
+                        <select id="boardThemeSelect">
+                            <option value="classic" selected>Classic</option>
+                            <option value="wooden">Wooden</option>
+                            <option value="marble">Marble</option>
+                            <option value="glass">Glass</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Display Settings</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="showCoordinates" checked>
+                            Show Coordinates
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="highlightLastMove" checked>
+                            Highlight Last Move
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="showPossibleMoves" checked>
+                            Show Possible Moves
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="enableAnimations" checked>
+                            Enable Animations
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Audio Settings</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="enableSounds" checked>
+                            Enable Sounds
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label for="volumeSlider">Volume:</label>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50">
+                        <span id="volumeValue">50%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+                <button id="resetSettings" class="btn btn-secondary">Reset to Default</button>
+            </div>
+        </div>
     </div>
 
     <!-- Game Over Modal -->
@@ -124,6 +232,7 @@
             </div>
             <div class="modal-body">
                 <div class="game-over-content">
+                    <div class="game-result" id="gameResult"></div>
                     <p id="gameOverMessage">Game has ended!</p>
                     <div class="game-over-stats">
                         <div class="stat-item">
@@ -138,302 +247,91 @@
                             <span class="stat-label">Captures:</span>
                             <span id="finalCaptures" class="stat-value">0</span>
                         </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Accuracy:</span>
+                            <span id="finalAccuracy" class="stat-value">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
-                <button id="exportGameBtn" class="btn btn-secondary">Export Game</button>
+                <button id="analyzeGameBtn" class="btn btn-secondary">Analyze Game</button>
+                <button id="exportGameBtn" class="btn btn-secondary">Export PGN</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Simple Chess Game - Minimal Version
-        let chess = null;
-        let selectedSquare = null;
-        let gameStats = {
-            totalMoves: 0,
-            captures: 0,
-            checks: 0,
-            startTime: Date.now()
-        };
-
-        // Initialize game
-        function initGame() {
-            console.log('Initializing chess game...');
-            
-            // Check if Chess.js is loaded
-            if (typeof Chess === 'undefined') {
-                console.error('Chess.js library not loaded!');
-                document.getElementById('chessBoard').innerHTML = '<div style="color: red; padding: 20px;">Chess.js failed to load</div>';
-                return;
-            }
-
-            try {
-                chess = new Chess();
-                console.log('Chess.js initialized successfully');
-                console.log('Initial FEN:', chess.fen());
-                
-                createBoard();
-                updatePieces();
-                updateDisplay();
-                bindEvents();
-                
-                console.log('Game initialized successfully');
-            } catch (error) {
-                console.error('Error initializing game:', error);
-                document.getElementById('chessBoard').innerHTML = '<div style="color: red; padding: 20px;">Error: ' + error.message + '</div>';
-            }
-        }
-
-        // Create chess board
-        function createBoard() {
-            const boardElement = document.getElementById('chessBoard');
-            boardElement.innerHTML = '';
-            
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const square = document.createElement('div');
-                    square.className = 'square';
-                    square.dataset.row = row;
-                    square.dataset.col = col;
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Play</h2>
+                <button class="close-btn" id="closeHelp">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-content">
+                    <h3>🎯 Objective</h3>
+                    <p>The goal is to checkmate your opponent's king by attacking it in a way that it cannot escape capture.</p>
                     
-                    // Add square coloring
-                    if ((row + col) % 2 === 0) {
-                        square.style.backgroundColor = '#f0d9b5';
-                    } else {
-                        square.style.backgroundColor = '#b58863';
-                    }
+                    <h3>🎮 Controls</h3>
+                    <ul>
+                        <li><strong>Click</strong> a piece to select it</li>
+                        <li><strong>Click</strong> a highlighted square to move</li>
+                        <li><strong>Drag & Drop</strong> pieces to move them</li>
+                        <li><strong>Right-click</strong> to cancel selection</li>
+                    </ul>
                     
-                    square.addEventListener('click', handleSquareClick);
-                    boardElement.appendChild(square);
-                }
-            }
-            
-            console.log('Board created with', boardElement.children.length, 'squares');
-        }
-
-        // Update pieces on board
-        function updatePieces() {
-            console.log('Updating pieces...');
-            
-            const squares = document.querySelectorAll('.square');
-            squares.forEach(square => {
-                const row = parseInt(square.dataset.row);
-                const col = parseInt(square.dataset.col);
-                
-                // Clear previous piece
-                square.innerHTML = '';
-                
-                // Get piece from chess.js
-                const algebraic = rowColToAlgebraic(row, col);
-                const piece = chess.get(algebraic);
-                
-                if (piece) {
-                    const pieceElement = document.createElement('div');
-                    pieceElement.className = 'piece';
-                    pieceElement.innerHTML = getPieceSymbol(piece);
+                    <h3>⚡ Special Moves</h3>
+                    <ul>
+                        <li><strong>Castling:</strong> Move king 2 squares toward rook</li>
+                        <li><strong>En Passant:</strong> Capture passing pawn</li>
+                        <li><strong>Promotion:</strong> Pawn reaching end becomes queen</li>
+                    </ul>
                     
-                    if (piece.color === 'w') {
-                        pieceElement.style.color = '#ffffff';
-                        pieceElement.style.textShadow = '0 0 10px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.8)';
-                    } else {
-                        pieceElement.style.color = '#2a2a2a';
-                        pieceElement.style.textShadow = '0 0 10px rgba(255,215,0,0.6), 0 2px 4px rgba(0,0,0,0.8)';
-                    }
-                    
-                    square.appendChild(pieceElement);
-                }
-            });
-            
-            console.log('Pieces updated');
-        }
+                    <h3>🎚️ Features</h3>
+                    <ul>
+                        <li><strong>AI Difficulty:</strong> Easy, Medium, Hard, Expert</li>
+                        <li><strong>Analysis:</strong> Real-time position evaluation</li>
+                        <li><strong>Themes:</strong> Multiple board themes</li>
+                        <li><strong>Sounds:</strong> Audio feedback for moves</li>
+                        <li><strong>Export:</strong> Save games as PGN</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeHelpBtn" class="btn btn-primary">Got it!</button>
+            </div>
+        </div>
+    </div>
 
-        // Get piece symbol
-        function getPieceSymbol(piece) {
-            const symbols = {
-                'p': { 'w': '♙', 'b': '♟' },
-                'r': { 'w': '♖', 'b': '♜' },
-                'n': { 'w': '♘', 'b': '♞' },
-                'b': { 'w': '♗', 'b': '♝' },
-                'q': { 'w': '♕', 'b': '♛' },
-                'k': { 'w': '♔', 'b': '♚' }
-            };
-            return symbols[piece.type][piece.color] || '?';
-        }
+    <!-- Promotion Modal -->
+    <div id="promotionModal" class="modal">
+        <div class="modal-content promotion-modal">
+            <div class="modal-header">
+                <h2>Choose Promotion</h2>
+            </div>
+            <div class="modal-body">
+                <div class="promotion-pieces">
+                    <div class="promotion-piece" data-piece="q">♕</div>
+                    <div class="promotion-piece" data-piece="r">♖</div>
+                    <div class="promotion-piece" data-piece="b">♗</div>
+                    <div class="promotion-piece" data-piece="n">♘</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Convert row/col to algebraic notation
-        function rowColToAlgebraic(row, col) {
-            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-            const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-            return files[col] + ranks[row];
-        }
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading Chess Engine...</div>
+        </div>
+    </div>
 
-        // Handle square click
-        function handleSquareClick(event) {
-            const square = event.currentTarget;
-            const row = parseInt(square.dataset.row);
-            const col = parseInt(square.dataset.col);
-            const algebraic = rowColToAlgebraic(row, col);
-            
-            console.log('Square clicked:', algebraic, 'Row:', row, 'Col:', col);
-            
-            if (selectedSquare) {
-                // Try to make a move
-                const from = rowColToAlgebraic(selectedSquare.row, selectedSquare.col);
-                const to = algebraic;
-                
-                console.log('Attempting move from', from, 'to', to);
-                
-                try {
-                    const move = chess.move({ from, to, promotion: 'q' });
-                    
-                    if (move) {
-                        console.log('Move successful:', move);
-                        gameStats.totalMoves++;
-                        
-                        if (move.captured) {
-                            gameStats.captures++;
-                        }
-                        
-                        clearSelection();
-                        updatePieces();
-                        updateDisplay();
-                        
-                        // AI move
-                        setTimeout(makeAIMove, 500);
-                    } else {
-                        console.log('Invalid move');
-                        clearSelection();
-                        selectSquare(row, col);
-                    }
-                } catch (error) {
-                    console.log('Move error:', error);
-                    clearSelection();
-                    selectSquare(row, col);
-                }
-            } else {
-                selectSquare(row, col);
-            }
-        }
-
-        // Select square
-        function selectSquare(row, col) {
-            const algebraic = rowColToAlgebraic(row, col);
-            const piece = chess.get(algebraic);
-            
-            if (piece && piece.color === chess.turn()) {
-                selectedSquare = { row, col };
-                
-                // Highlight selected square
-                const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                square.style.backgroundColor = '#667eea';
-                square.style.boxShadow = 'inset 0 0 0 3px rgba(255,255,255,0.6)';
-                
-                console.log('Selected square:', algebraic, 'Piece:', piece);
-            }
-        }
-
-        // Clear selection
-        function clearSelection() {
-            selectedSquare = null;
-            
-            // Reset square colors
-            const squares = document.querySelectorAll('.square');
-            squares.forEach((square, index) => {
-                const row = Math.floor(index / 8);
-                const col = index % 8;
-                
-                if ((row + col) % 2 === 0) {
-                    square.style.backgroundColor = '#f0d9b5';
-                } else {
-                    square.style.backgroundColor = '#b58863';
-                }
-                square.style.boxShadow = 'none';
-            });
-        }
-
-        // Make AI move
-        function makeAIMove() {
-            if (chess.isGameOver()) return;
-            
-            const moves = chess.moves({ verbose: true });
-            if (moves.length === 0) return;
-            
-            const randomMove = moves[Math.floor(Math.random() * moves.length)];
-            
-            try {
-                const move = chess.move(randomMove);
-                
-                if (move) {
-                    console.log('AI move:', move);
-                    gameStats.totalMoves++;
-                    
-                    if (move.captured) {
-                        gameStats.captures++;
-                    }
-                    
-                    updatePieces();
-                    updateDisplay();
-                }
-            } catch (error) {
-                console.error('AI move error:', error);
-            }
-        }
-
-        // Update display
-        function updateDisplay() {
-            const turn = chess.turn() === 'w' ? 'White' : 'Black';
-            document.getElementById('currentTurn').textContent = turn;
-            document.getElementById('totalMoves').textContent = gameStats.totalMoves;
-            document.getElementById('captures').textContent = gameStats.captures;
-            
-            const elapsed = Math.floor((Date.now() - gameStats.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            document.getElementById('gameTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // Bind events
-        function bindEvents() {
-            document.getElementById('newGameBtn').addEventListener('click', () => {
-                chess.reset();
-                gameStats = {
-                    totalMoves: 0,
-                    captures: 0,
-                    checks: 0,
-                    startTime: Date.now()
-                };
-                clearSelection();
-                updatePieces();
-                updateDisplay();
-            });
-
-            document.getElementById('flipBoardBtn').addEventListener('click', () => {
-                const board = document.getElementById('chessBoard');
-                if (board.style.transform === 'rotate(180deg)') {
-                    board.style.transform = 'rotate(0deg)';
-                    document.querySelectorAll('.piece').forEach(piece => {
-                        piece.style.transform = 'rotate(0deg)';
-                    });
-                } else {
-                    board.style.transform = 'rotate(180deg)';
-                    document.querySelectorAll('.piece').forEach(piece => {
-                        piece.style.transform = 'rotate(180deg)';
-                    });
-                }
-            });
-        }
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, initializing game...');
-            initGame();
-            
-            // Update timer every second
-            setInterval(updateDisplay, 1000);
-        });
-    </script>
+    <!-- Scripts -->
+    <script src="chess-engine.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
