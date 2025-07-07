@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♔</text></svg>">
-    <!-- Add chess.js library - using stable version -->
-    <script src="https://unpkg.com/chess.js@0.13.4/chess.min.js"></script>
+    <!-- Add chess.js library - using CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -115,156 +115,6 @@
         </main>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Game Settings</h2>
-                <button class="close-btn" id="closeSettings">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-tabs">
-                    <button class="tab-btn active" data-tab="basic">Basic</button>
-                    <button class="tab-btn" data-tab="advanced">Advanced</button>
-                    <button class="tab-btn" data-tab="appearance">Appearance</button>
-                </div>
-                
-                <div class="tab-content" id="basicTab">
-                    <div class="setting-group">
-                        <label>Game Mode:</label>
-                        <select id="gameModeSelect">
-                            <option value="ai">vs AI</option>
-                            <option value="human">vs Human</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label>AI Difficulty:</label>
-                        <select id="difficultySelect">
-                            <option value="easy">Easy</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="hard">Hard</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label>Your Color:</label>
-                        <select id="playerColorSelect">
-                            <option value="white" selected>White</option>
-                            <option value="black">Black</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="advancedTab" style="display: none;">
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="enableSoundToggle" checked>
-                            <span class="checkmark"></span>
-                            Enable Sound Effects
-                        </label>
-                    </div>
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="enableAnimationsToggle" checked>
-                            <span class="checkmark"></span>
-                            Enable Animations
-                        </label>
-                    </div>
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="showLegalMovesToggle" checked>
-                            <span class="checkmark"></span>
-                            Show Legal Moves
-                        </label>
-                    </div>
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="enableDragDropToggle" checked>
-                            <span class="checkmark"></span>
-                            Enable Drag & Drop
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="appearanceTab" style="display: none;">
-                    <div class="setting-group">
-                        <label>Board Theme:</label>
-                        <select id="boardThemeSelect">
-                            <option value="classic">Classic</option>
-                            <option value="modern" selected>Modern</option>
-                            <option value="dark">Dark</option>
-                            <option value="neon">Neon</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label>Piece Style:</label>
-                        <select id="pieceStyleSelect">
-                            <option value="classic">Classic</option>
-                            <option value="modern" selected>Modern</option>
-                            <option value="minimal">Minimal</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="applySettings" class="btn btn-primary">Apply Settings</button>
-                <button id="cancelSettings" class="btn btn-secondary">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>How to Play</h2>
-                <button class="close-btn" id="closeHelp">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="help-section">
-                    <h3>🎮 Basic Controls</h3>
-                    <ul>
-                        <li><strong>Click</strong> - Select and move pieces</li>
-                        <li><strong>Drag & Drop</strong> - Drag pieces to move them</li>
-                        <li><strong>ESC</strong> - Clear selection</li>
-                        <li><strong>Ctrl+N</strong> - New game</li>
-                        <li><strong>Ctrl+F</strong> - Flip board</li>
-                    </ul>
-                </div>
-                <div class="help-section">
-                    <h3>🎯 Game Features</h3>
-                    <ul>
-                        <li><strong>AI Opponent</strong> - Play against 3 difficulty levels</li>
-                        <li><strong>Move History</strong> - Review all moves with chess notation</li>
-                        <li><strong>Statistics</strong> - Track game performance and time</li>
-                        <li><strong>Sound Effects</strong> - Audio feedback for moves and captures</li>
-                        <li><strong>Themes</strong> - Multiple board and piece styles</li>
-                        <li><strong>Multiplayer</strong> - Play locally against a friend</li>
-                    </ul>
-                </div>
-                <div class="help-section">
-                    <h3>🎨 Visual Indicators</h3>
-                    <ul>
-                        <li><strong>Blue Highlight</strong> - Selected piece</li>
-                        <li><strong>Green Dots</strong> - Valid moves</li>
-                        <li><strong>Red Circles</strong> - Capture moves</li>
-                        <li><strong>Yellow Outline</strong> - Last move made</li>
-                        <li><strong>Red Pulse</strong> - King in check</li>
-                        <li><strong>Spin Animation</strong> - AI thinking</li>
-                    </ul>
-                </div>
-                <div class="help-section">
-                    <h3>⚙️ Advanced Features</h3>
-                    <ul>
-                        <li><strong>Game Analysis</strong> - Review game statistics after completion</li>
-                        <li><strong>Export Games</strong> - Save games as JSON files</li>
-                        <li><strong>Customizable Settings</strong> - Adjust sound, animations, and themes</li>
-                        <li><strong>Responsive Design</strong> - Works on desktop, tablet, and mobile</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Game Over Modal -->
     <div id="gameOverModal" class="modal">
         <div class="modal-content">
@@ -298,106 +148,291 @@
         </div>
     </div>
 
-    <!-- Load scripts -->
-    <script src="chess-engine.js"></script>
-    <script src="game.js"></script>
     <script>
-        // Enhanced UI functionality
-        document.addEventListener('DOMContentLoaded', () => {
-            // Tab switching functionality
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
+        // Simple Chess Game - Minimal Version
+        let chess = null;
+        let selectedSquare = null;
+        let gameStats = {
+            totalMoves: 0,
+            captures: 0,
+            checks: 0,
+            startTime: Date.now()
+        };
+
+        // Initialize game
+        function initGame() {
+            console.log('Initializing chess game...');
             
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabName = button.dataset.tab;
-                    
-                    // Remove active class from all buttons
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    
-                    // Hide all tab contents
-                    tabContents.forEach(content => content.style.display = 'none');
-                    
-                    // Show selected tab content
-                    const targetTab = document.getElementById(tabName + 'Tab');
-                    if (targetTab) {
-                        targetTab.style.display = 'block';
-                    }
-                });
-            });
-            
-            // Help button functionality
-            document.getElementById('helpBtn').addEventListener('click', () => {
-                document.getElementById('helpModal').style.display = 'flex';
-            });
-            
-            // Close help modal
-            document.getElementById('closeHelp').addEventListener('click', () => {
-                document.getElementById('helpModal').style.display = 'none';
-            });
-            
-            // Close help modal when clicking outside
-            document.getElementById('helpModal').addEventListener('click', (e) => {
-                if (e.target.id === 'helpModal') {
-                    document.getElementById('helpModal').style.display = 'none';
-                }
-            });
-            
-            // Close game over modal
-            document.getElementById('closeGameOver').addEventListener('click', () => {
-                document.getElementById('gameOverModal').style.display = 'none';
-            });
-            
-            // Play again button
-            document.getElementById('playAgainBtn').addEventListener('click', () => {
-                document.getElementById('gameOverModal').style.display = 'none';
-                if (window.game && window.game.newGame) {
-                    window.game.newGame();
-                }
-            });
-            
-            // Export game button
-            document.getElementById('exportGameBtn').addEventListener('click', () => {
-                if (window.game && window.game.exportGame) {
-                    window.game.exportGame();
-                }
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                // Show help with F1
-                if (e.key === 'F1') {
-                    e.preventDefault();
-                    document.getElementById('helpModal').style.display = 'flex';
-                }
+            // Check if Chess.js is loaded
+            if (typeof Chess === 'undefined') {
+                console.error('Chess.js library not loaded!');
+                document.getElementById('chessBoard').innerHTML = '<div style="color: red; padding: 20px;">Chess.js failed to load</div>';
+                return;
+            }
+
+            try {
+                chess = new Chess();
+                console.log('Chess.js initialized successfully');
+                console.log('Initial FEN:', chess.fen());
                 
-                // New game with Ctrl+N
-                if (e.ctrlKey && e.key === 'n') {
-                    e.preventDefault();
-                    if (window.game && window.game.newGame) {
-                        window.game.newGame();
-                    }
-                }
+                createBoard();
+                updatePieces();
+                updateDisplay();
+                bindEvents();
                 
-                // Flip board with Ctrl+F
-                if (e.ctrlKey && e.key === 'f') {
-                    e.preventDefault();
-                    if (window.game && window.game.flipBoard) {
-                        window.game.flipBoard();
+                console.log('Game initialized successfully');
+            } catch (error) {
+                console.error('Error initializing game:', error);
+                document.getElementById('chessBoard').innerHTML = '<div style="color: red; padding: 20px;">Error: ' + error.message + '</div>';
+            }
+        }
+
+        // Create chess board
+        function createBoard() {
+            const boardElement = document.getElementById('chessBoard');
+            boardElement.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    
+                    // Add square coloring
+                    if ((row + col) % 2 === 0) {
+                        square.style.backgroundColor = '#f0d9b5';
+                    } else {
+                        square.style.backgroundColor = '#b58863';
                     }
+                    
+                    square.addEventListener('click', handleSquareClick);
+                    boardElement.appendChild(square);
                 }
+            }
+            
+            console.log('Board created with', boardElement.children.length, 'squares');
+        }
+
+        // Update pieces on board
+        function updatePieces() {
+            console.log('Updating pieces...');
+            
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                const row = parseInt(square.dataset.row);
+                const col = parseInt(square.dataset.col);
                 
-                // Close modals with Escape
-                if (e.key === 'Escape') {
-                    const modals = document.querySelectorAll('.modal');
-                    modals.forEach(modal => {
-                        if (modal.style.display === 'flex') {
-                            modal.style.display = 'none';
+                // Clear previous piece
+                square.innerHTML = '';
+                
+                // Get piece from chess.js
+                const algebraic = rowColToAlgebraic(row, col);
+                const piece = chess.get(algebraic);
+                
+                if (piece) {
+                    const pieceElement = document.createElement('div');
+                    pieceElement.className = 'piece';
+                    pieceElement.innerHTML = getPieceSymbol(piece);
+                    
+                    if (piece.color === 'w') {
+                        pieceElement.style.color = '#ffffff';
+                        pieceElement.style.textShadow = '0 0 10px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.8)';
+                    } else {
+                        pieceElement.style.color = '#2a2a2a';
+                        pieceElement.style.textShadow = '0 0 10px rgba(255,215,0,0.6), 0 2px 4px rgba(0,0,0,0.8)';
+                    }
+                    
+                    square.appendChild(pieceElement);
+                }
+            });
+            
+            console.log('Pieces updated');
+        }
+
+        // Get piece symbol
+        function getPieceSymbol(piece) {
+            const symbols = {
+                'p': { 'w': '♙', 'b': '♟' },
+                'r': { 'w': '♖', 'b': '♜' },
+                'n': { 'w': '♘', 'b': '♞' },
+                'b': { 'w': '♗', 'b': '♝' },
+                'q': { 'w': '♕', 'b': '♛' },
+                'k': { 'w': '♔', 'b': '♚' }
+            };
+            return symbols[piece.type][piece.color] || '?';
+        }
+
+        // Convert row/col to algebraic notation
+        function rowColToAlgebraic(row, col) {
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+            return files[col] + ranks[row];
+        }
+
+        // Handle square click
+        function handleSquareClick(event) {
+            const square = event.currentTarget;
+            const row = parseInt(square.dataset.row);
+            const col = parseInt(square.dataset.col);
+            const algebraic = rowColToAlgebraic(row, col);
+            
+            console.log('Square clicked:', algebraic, 'Row:', row, 'Col:', col);
+            
+            if (selectedSquare) {
+                // Try to make a move
+                const from = rowColToAlgebraic(selectedSquare.row, selectedSquare.col);
+                const to = algebraic;
+                
+                console.log('Attempting move from', from, 'to', to);
+                
+                try {
+                    const move = chess.move({ from, to, promotion: 'q' });
+                    
+                    if (move) {
+                        console.log('Move successful:', move);
+                        gameStats.totalMoves++;
+                        
+                        if (move.captured) {
+                            gameStats.captures++;
                         }
+                        
+                        clearSelection();
+                        updatePieces();
+                        updateDisplay();
+                        
+                        // AI move
+                        setTimeout(makeAIMove, 500);
+                    } else {
+                        console.log('Invalid move');
+                        clearSelection();
+                        selectSquare(row, col);
+                    }
+                } catch (error) {
+                    console.log('Move error:', error);
+                    clearSelection();
+                    selectSquare(row, col);
+                }
+            } else {
+                selectSquare(row, col);
+            }
+        }
+
+        // Select square
+        function selectSquare(row, col) {
+            const algebraic = rowColToAlgebraic(row, col);
+            const piece = chess.get(algebraic);
+            
+            if (piece && piece.color === chess.turn()) {
+                selectedSquare = { row, col };
+                
+                // Highlight selected square
+                const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                square.style.backgroundColor = '#667eea';
+                square.style.boxShadow = 'inset 0 0 0 3px rgba(255,255,255,0.6)';
+                
+                console.log('Selected square:', algebraic, 'Piece:', piece);
+            }
+        }
+
+        // Clear selection
+        function clearSelection() {
+            selectedSquare = null;
+            
+            // Reset square colors
+            const squares = document.querySelectorAll('.square');
+            squares.forEach((square, index) => {
+                const row = Math.floor(index / 8);
+                const col = index % 8;
+                
+                if ((row + col) % 2 === 0) {
+                    square.style.backgroundColor = '#f0d9b5';
+                } else {
+                    square.style.backgroundColor = '#b58863';
+                }
+                square.style.boxShadow = 'none';
+            });
+        }
+
+        // Make AI move
+        function makeAIMove() {
+            if (chess.isGameOver()) return;
+            
+            const moves = chess.moves({ verbose: true });
+            if (moves.length === 0) return;
+            
+            const randomMove = moves[Math.floor(Math.random() * moves.length)];
+            
+            try {
+                const move = chess.move(randomMove);
+                
+                if (move) {
+                    console.log('AI move:', move);
+                    gameStats.totalMoves++;
+                    
+                    if (move.captured) {
+                        gameStats.captures++;
+                    }
+                    
+                    updatePieces();
+                    updateDisplay();
+                }
+            } catch (error) {
+                console.error('AI move error:', error);
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            const turn = chess.turn() === 'w' ? 'White' : 'Black';
+            document.getElementById('currentTurn').textContent = turn;
+            document.getElementById('totalMoves').textContent = gameStats.totalMoves;
+            document.getElementById('captures').textContent = gameStats.captures;
+            
+            const elapsed = Math.floor((Date.now() - gameStats.startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('gameTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Bind events
+        function bindEvents() {
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                chess.reset();
+                gameStats = {
+                    totalMoves: 0,
+                    captures: 0,
+                    checks: 0,
+                    startTime: Date.now()
+                };
+                clearSelection();
+                updatePieces();
+                updateDisplay();
+            });
+
+            document.getElementById('flipBoardBtn').addEventListener('click', () => {
+                const board = document.getElementById('chessBoard');
+                if (board.style.transform === 'rotate(180deg)') {
+                    board.style.transform = 'rotate(0deg)';
+                    document.querySelectorAll('.piece').forEach(piece => {
+                        piece.style.transform = 'rotate(0deg)';
+                    });
+                } else {
+                    board.style.transform = 'rotate(180deg)';
+                    document.querySelectorAll('.piece').forEach(piece => {
+                        piece.style.transform = 'rotate(180deg)';
                     });
                 }
             });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing game...');
+            initGame();
+            
+            // Update timer every second
+            setInterval(updateDisplay, 1000);
         });
     </script>
 </body>
