@@ -9,17 +9,32 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♔</text></svg>">
     <!-- Chess.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <meta name="description" content="Enhanced chess game with advanced AI, drag & drop, beautiful themes, and comprehensive features">
+    <meta name="keywords" content="chess, game, AI, drag and drop, online chess, chess engine">
+    <meta name="author" content="Another Chess">
+    <meta name="theme-color" content="#667eea">
+    <!-- Open Graph meta tags -->
+    <meta property="og:title" content="Another Chess - Enhanced Chess Game">
+    <meta property="og:description" content="Play chess with advanced AI, beautiful themes, and enhanced features">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://eladser.github.io/another_chess/">
+    <meta property="og:image" content="https://eladser.github.io/another_chess/chess-preview.png">
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Another Chess - Enhanced Chess Game">
+    <meta name="twitter:description" content="Play chess with advanced AI, beautiful themes, and enhanced features">
+    <meta name="twitter:image" content="https://eladser.github.io/another_chess/chess-preview.png">
 </head>
 <body>
     <div class="container">
         <header class="header">
             <h1 class="title">♔ Another Chess</h1>
             <div class="game-controls">
-                <button id="newGameBtn" class="btn btn-primary">🎮 New Game</button>
-                <button id="flipBoardBtn" class="btn btn-secondary">🔄 Flip Board</button>
-                <button id="undoBtn" class="btn btn-secondary">↩️ Undo</button>
-                <button id="settingsBtn" class="btn btn-secondary">⚙️ Settings</button>
-                <button id="helpBtn" class="btn btn-secondary">❓ Help</button>
+                <button id="newGameBtn" class="btn btn-primary" title="Start a new game (Ctrl+N)">🎮 New Game</button>
+                <button id="flipBoardBtn" class="btn btn-secondary" title="Flip the board (Ctrl+F)">🔄 Flip Board</button>
+                <button id="undoBtn" class="btn btn-secondary" title="Undo last move (Ctrl+U)">↩️ Undo</button>
+                <button id="settingsBtn" class="btn btn-secondary" title="Open settings (Ctrl+S)">⚙️ Settings</button>
+                <button id="helpBtn" class="btn btn-secondary" title="Show help (H or ?)">❓ Help</button>
             </div>
         </header>
 
@@ -49,7 +64,7 @@
                             <div class="coord">1</div>
                         </div>
                         <div class="board-area">
-                            <div id="chessBoard" class="chess-board"></div>
+                            <div id="chessBoard" class="chess-board board-theme-classic" role="grid" aria-label="Chess board"></div>
                             <div class="coordinates coordinates-bottom" id="bottomCoords">
                                 <div class="coord">a</div>
                                 <div class="coord">b</div>
@@ -131,30 +146,31 @@
 
                 <div class="move-history">
                     <h3>📜 Move History</h3>
-                    <div id="moveList" class="move-list"></div>
+                    <div id="moveList" class="move-list" role="log" aria-label="Move history"></div>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
+    <div id="settingsModal" class="modal" role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ Settings</h2>
-                <button class="close-btn" id="closeSettings">&times;</button>
+                <h2 id="settingsTitle">⚙️ Settings</h2>
+                <button class="close-btn" id="closeSettings" aria-label="Close settings">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="settings-section">
                     <h3>🎮 Game Settings</h3>
                     <div class="setting-item">
                         <label for="difficultySelect">AI Difficulty:</label>
-                        <select id="difficultySelect">
+                        <select id="difficultySelect" aria-describedby="difficultyHelp">
                             <option value="easy">🟢 Easy (900 ELO)</option>
                             <option value="medium" selected>🟡 Medium (1400 ELO)</option>
                             <option value="hard">🔴 Hard (1800 ELO)</option>
                             <option value="expert">⚫ Expert (2200 ELO)</option>
                         </select>
+                        <small id="difficultyHelp">Choose AI opponent strength</small>
                     </div>
                     <div class="setting-item">
                         <label for="playerColorSelect">Play as:</label>
@@ -211,7 +227,7 @@
                     </div>
                     <div class="setting-item">
                         <label for="volumeSlider">Volume:</label>
-                        <input type="range" id="volumeSlider" min="0" max="100" value="50">
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-describedby="volumeValue">
                         <span id="volumeValue">50%</span>
                     </div>
                 </div>
@@ -224,11 +240,11 @@
     </div>
 
     <!-- Game Over Modal -->
-    <div id="gameOverModal" class="modal">
+    <div id="gameOverModal" class="modal" role="dialog" aria-labelledby="gameOverTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="gameOverTitle">🎮 Game Over</h2>
-                <button class="close-btn" id="closeGameOver">&times;</button>
+                <button class="close-btn" id="closeGameOver" aria-label="Close game over dialog">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="game-over-content">
@@ -263,11 +279,11 @@
     </div>
 
     <!-- Help Modal -->
-    <div id="helpModal" class="modal">
+    <div id="helpModal" class="modal" role="dialog" aria-labelledby="helpTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>❓ How to Play</h2>
-                <button class="close-btn" id="closeHelp">&times;</button>
+                <h2 id="helpTitle">❓ How to Play</h2>
+                <button class="close-btn" id="closeHelp" aria-label="Close help dialog">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="help-content">
@@ -280,6 +296,12 @@
                         <li><strong>🖱️ Drag & Drop:</strong> Drag pieces to move them (enhanced!)</li>
                         <li><strong>🖱️ Right-click:</strong> Cancel current selection</li>
                         <li><strong>⌨️ Escape:</strong> Cancel current selection</li>
+                        <li><strong>⌨️ Ctrl+U:</strong> Undo last move</li>
+                        <li><strong>⌨️ Ctrl+N:</strong> New game</li>
+                        <li><strong>⌨️ Ctrl+F:</strong> Flip board</li>
+                        <li><strong>⌨️ Ctrl+S:</strong> Open settings</li>
+                        <li><strong>⌨️ H or ?:</strong> Show this help</li>
+                        <li><strong>⌨️ Arrow keys:</strong> Navigate move history</li>
                     </ul>
                     
                     <h3>⚡ Special Moves</h3>
@@ -295,9 +317,10 @@
                         <li><strong>🔍 Analysis:</strong> Real-time position evaluation</li>
                         <li><strong>🎨 Themes:</strong> Multiple beautiful board themes</li>
                         <li><strong>🔊 Audio:</strong> Sound effects for moves and captures</li>
-                        <li><strong>📱 Mobile:</strong> Fully responsive design</li>
+                        <li><strong>📱 Mobile:</strong> Fully responsive design with touch support</li>
                         <li><strong>💾 Export:</strong> Save games as PGN files</li>
                         <li><strong>🏆 Statistics:</strong> Track your progress</li>
+                        <li><strong>🎯 Visual Effects:</strong> Enhanced animations and feedback</li>
                     </ul>
                     
                     <h3>🏆 Tips for Success</h3>
@@ -317,34 +340,38 @@
     </div>
 
     <!-- Promotion Modal -->
-    <div id="promotionModal" class="modal">
+    <div id="promotionModal" class="modal" role="dialog" aria-labelledby="promotionTitle" aria-modal="true">
         <div class="modal-content promotion-modal">
             <div class="modal-header">
-                <h2>👑 Choose Promotion</h2>
+                <h2 id="promotionTitle">👑 Choose Promotion</h2>
             </div>
             <div class="modal-body">
                 <div class="promotion-pieces">
-                    <div class="promotion-piece" data-piece="q" title="Queen - Most powerful piece">♕</div>
-                    <div class="promotion-piece" data-piece="r" title="Rook - Moves horizontally and vertically">♖</div>
-                    <div class="promotion-piece" data-piece="b" title="Bishop - Moves diagonally">♗</div>
-                    <div class="promotion-piece" data-piece="n" title="Knight - Moves in L-shape">♘</div>
+                    <div class="promotion-piece" data-piece="q" title="Queen - Most powerful piece" role="button" tabindex="0">♕</div>
+                    <div class="promotion-piece" data-piece="r" title="Rook - Moves horizontally and vertically" role="button" tabindex="0">♖</div>
+                    <div class="promotion-piece" data-piece="b" title="Bishop - Moves diagonally" role="button" tabindex="0">♗</div>
+                    <div class="promotion-piece" data-piece="n" title="Knight - Moves in L-shape" role="button" tabindex="0">♘</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen">
+    <div id="loadingScreen" class="loading-screen" aria-live="polite">
         <div class="loading-content">
-            <div class="loading-spinner"></div>
+            <div class="loading-spinner" aria-hidden="true"></div>
             <div class="loading-text">🎮 Loading Enhanced Chess Engine...</div>
             <div class="loading-subtext">Preparing AI, board, and features...</div>
         </div>
     </div>
 
+    <!-- Notification System -->
+    <div id="notificationContainer" class="notification-container" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Scripts -->
     <script src="chess-engine.js"></script>
     <script src="game.js"></script>
+    <script src="board-enhancements.js"></script>
     
     <!-- Service Worker for offline support -->
     <script>
@@ -359,6 +386,23 @@
                     });
             });
         }
+    </script>
+
+    <!-- Performance monitoring -->
+    <script>
+        // Basic performance monitoring
+        window.addEventListener('load', () => {
+            if ('performance' in window) {
+                const loadTime = performance.now();
+                console.log(`⚡ Page loaded in ${loadTime.toFixed(2)}ms`);
+                
+                // Log timing metrics
+                const timing = performance.getEntriesByType('navigation')[0];
+                if (timing) {
+                    console.log(`🚀 DOM loaded in ${timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart}ms`);
+                }
+            }
+        });
     </script>
 </body>
 </html>
