@@ -183,52 +183,43 @@ body {
     user-select: none;
 }
 
-/* Board Themes */
-.chess-board.classic .square:nth-child(odd) {
+/* Square colors - default classic theme */
+.square.light {
     background: #f0d9b5;
 }
 
-.chess-board.classic .square:nth-child(even) {
+.square.dark {
     background: #b58863;
 }
 
-.chess-board.modern .square:nth-child(odd) {
+/* Board Themes */
+.chess-board.modern .square.light {
     background: #eeeeee;
 }
 
-.chess-board.modern .square:nth-child(even) {
+.chess-board.modern .square.dark {
     background: #8877aa;
 }
 
-.chess-board.dark .square:nth-child(odd) {
+.chess-board.dark .square.light {
     background: #4a4a4a;
 }
 
-.chess-board.dark .square:nth-child(even) {
+.chess-board.dark .square.dark {
     background: #2a2a2a;
 }
 
-.chess-board.neon .square:nth-child(odd) {
+.chess-board.neon .square.light {
     background: #1a1a2e;
+    border: 1px solid rgba(0, 255, 255, 0.2);
 }
 
-.chess-board.neon .square:nth-child(even) {
+.chess-board.neon .square.dark {
     background: #16213e;
-}
-
-.chess-board.neon .square {
     border: 1px solid rgba(0, 255, 255, 0.2);
 }
 
 /* Square states */
-.square.light {
-    background: #f0d9b5 !important;
-}
-
-.square.dark {
-    background: #b58863 !important;
-}
-
 .square.selected {
     background: #ffd700 !important;
     box-shadow: inset 0 0 0 3px #ff6b6b;
