@@ -29,7 +29,7 @@
                     <div class="player" id="topPlayer">
                         <div class="player-header">
                             <div class="player-name">AI Opponent</div>
-                            <div class="player-rating">★ <span id="aiRating">1400</span></div>
+                            <div class="player-rating">⭐ <span id="aiRating">1400</span></div>
                         </div>
                         <div class="captured-pieces" id="topCaptured"></div>
                         <div class="player-time" id="topTime">∞</div>
@@ -69,7 +69,7 @@
                         <div class="player" id="bottomPlayer">
                             <div class="player-header">
                                 <div class="player-name">You</div>
-                                <div class="player-rating">★ <span id="playerRating">1200</span></div>
+                                <div class="player-rating">⭐ <span id="playerRating">1200</span></div>
                             </div>
                             <div class="captured-pieces" id="bottomCaptured"></div>
                             <div class="player-time" id="bottomTime">∞</div>
@@ -126,7 +126,7 @@
                         <div class="eval-bar" id="evalBar"></div>
                         <div class="eval-text" id="evalText">+0.0</div>
                     </div>
-                    <div class="best-move" id="bestMove">Thinking...</div>
+                    <div class="best-move" id="bestMove">Ready</div>
                 </div>
 
                 <div class="move-history">
@@ -289,7 +289,7 @@
                         <li><strong>Promotion:</strong> Pawn reaching end becomes queen</li>
                     </ul>
                     
-                    <h3>🎚️ Features</h3>
+                    <h3>🎪 Features</h3>
                     <ul>
                         <li><strong>AI Difficulty:</strong> Easy, Medium, Hard, Expert</li>
                         <li><strong>Analysis:</strong> Real-time position evaluation</li>
@@ -331,6 +331,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="board-fixes.js"></script>
     <script src="chess-engine.js"></script>
     <script src="game.js"></script>
 </body>
