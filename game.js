@@ -11,6 +11,7 @@ class ChessGame {
         this.lastMove = null;
         this.draggedPiece = null;
         this.draggedElement = null;
+        this.dragOffset = { x: 0, y: 0 };
         this.gameSettings = {
             difficulty: 'medium',
             playerColor: 'white',
@@ -44,7 +45,7 @@ class ChessGame {
     
     // Initialize the game
     async initializeGame() {
-        console.log('Initializing chess game...');
+        console.log('🎮 Initializing chess game...');
         
         // Show loading screen
         this.showLoadingScreen();
@@ -57,11 +58,11 @@ class ChessGame {
             
             // Initialize chess.js directly
             this.chess = new Chess();
-            console.log('Chess.js initialized successfully');
+            console.log('✅ Chess.js initialized successfully');
             
             // Initialize chess engine
             this.engine = new ChessEngine(this.gameSettings.difficulty);
-            console.log('Chess engine initialized successfully');
+            console.log('✅ Chess engine initialized successfully');
             
             // Load settings
             this.loadSettings();
@@ -79,9 +80,9 @@ class ChessGame {
             // Hide loading screen
             this.hideLoadingScreen();
             
-            console.log('Game initialized successfully');
+            console.log('🎉 Game initialized successfully');
         } catch (error) {
-            console.error('Error initializing game:', error);
+            console.error('❌ Error initializing game:', error);
             this.showError('Failed to initialize chess game: ' + error.message);
         }
     }
@@ -129,23 +130,25 @@ class ChessGame {
                 square.dataset.col = col;
                 square.dataset.square = this.rowColToAlgebraic(row, col);
                 
-                // Add proper square coloring
+                // Add proper square coloring based on chess board pattern
                 if ((row + col) % 2 === 0) {
-                    square.style.backgroundColor = 'var(--light-square)';
+                    square.classList.add('light-square');
                 } else {
-                    square.style.backgroundColor = 'var(--dark-square)';
+                    square.classList.add('dark-square');
                 }
                 
                 // Add click and drag event listeners
                 square.addEventListener('click', (e) => this.handleSquareClick(e));
                 square.addEventListener('dragover', (e) => this.handleDragOver(e));
                 square.addEventListener('drop', (e) => this.handleDrop(e));
+                square.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+                square.addEventListener('dragleave', (e) => this.handleDragLeave(e));
                 
                 boardElement.appendChild(square);
             }
         }
         
-        console.log('Board created successfully');
+        console.log('✅ Board created successfully');
     }
     
     // Update pieces on board
@@ -175,9 +178,19 @@ class ChessGame {
                 // Add color class
                 pieceElement.classList.add(piece.color === 'w' ? 'white-piece' : 'black-piece');
                 
+                // Add data attributes for identification
+                pieceElement.dataset.piece = piece.type;
+                pieceElement.dataset.color = piece.color;
+                pieceElement.dataset.square = algebraicSquare;
+                
                 // Add drag event listeners
                 pieceElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
                 pieceElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
+                
+                // Prevent default drag behavior on images
+                pieceElement.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                });
                 
                 square.appendChild(pieceElement);
             }
@@ -186,7 +199,7 @@ class ChessGame {
         // Update captured pieces
         this.updateCapturedPieces();
         
-        console.log('Pieces updated');
+        console.log('✅ Pieces updated');
     }
     
     // Get piece symbol
@@ -222,12 +235,16 @@ class ChessGame {
     handleSquareClick(event) {
         if (this.gameState !== 'playing') return;
         
+        // Prevent click if we're dragging
+        if (this.draggedPiece) return;
+        
         const square = event.currentTarget;
         const row = parseInt(square.dataset.row);
         const col = parseInt(square.dataset.col);
         
         // Check if it's player's turn
         if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
+            console.log('❌ Not your turn!');
             return;
         }
         
@@ -240,6 +257,7 @@ class ChessGame {
                 this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
             } else {
                 this.clearSelection();
+                // If clicked on own piece, select it
                 if (piece && piece.color === this.chess.turn()) {
                     this.selectSquare(row, col);
                 }
@@ -282,12 +300,59 @@ class ChessGame {
         // Add dragging class
         event.target.classList.add('dragging');
         
+        // Calculate drag offset
+        const rect = event.target.getBoundingClientRect();
+        this.dragOffset = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        
         // Set drag data
         event.dataTransfer.setData('text/plain', JSON.stringify({ row, col }));
         event.dataTransfer.effectAllowed = 'move';
         
-        // Select the square
+        // Create drag image
+        const dragImage = event.target.cloneNode(true);
+        dragImage.style.transform = 'scale(1.2)';
+        dragImage.style.opacity = '0.8';
+        document.body.appendChild(dragImage);
+        event.dataTransfer.setDragImage(dragImage, this.dragOffset.x, this.dragOffset.y);
+        
+        // Remove drag image after setting
+        setTimeout(() => {
+            if (document.body.contains(dragImage)) {
+                document.body.removeChild(dragImage);
+            }
+        }, 0);
+        
+        // Select the square and show possible moves
         this.selectSquare(row, col);
+        
+        console.log('🎯 Drag started:', { row, col, piece });
+    }
+    
+    // Handle drag enter
+    handleDragEnter(event) {
+        if (!this.draggedPiece) return;
+        
+        event.preventDefault();
+        
+        const square = event.currentTarget;
+        const row = parseInt(square.dataset.row);
+        const col = parseInt(square.dataset.col);
+        
+        // Check if this is a valid drop target
+        if (this.isValidMove(this.draggedPiece.row, this.draggedPiece.col, row, col)) {
+            square.classList.add('drag-hover');
+        }
+    }
+    
+    // Handle drag leave
+    handleDragLeave(event) {
+        if (!this.draggedPiece) return;
+        
+        const square = event.currentTarget;
+        square.classList.remove('drag-hover');
     }
     
     // Handle drag over
@@ -317,31 +382,44 @@ class ChessGame {
         const row = parseInt(square.dataset.row);
         const col = parseInt(square.dataset.col);
         
-        // Remove drop target highlighting
-        document.querySelectorAll('.drop-target').forEach(sq => {
-            sq.classList.remove('drop-target');
-        });
+        // Remove all drag-related classes
+        this.clearDragHighlights();
         
         // Try to make the move
         if (this.isValidMove(this.draggedPiece.row, this.draggedPiece.col, row, col)) {
+            console.log('✅ Valid drop - making move');
             this.makeMove(this.draggedPiece.row, this.draggedPiece.col, row, col);
+        } else {
+            console.log('❌ Invalid drop');
         }
         
+        // Clean up drag state
         this.draggedPiece = null;
+        this.draggedElement = null;
     }
     
     // Handle drag end
     handleDragEnd(event) {
+        console.log('🏁 Drag ended');
+        
         // Remove dragging class
-        event.target.classList.remove('dragging');
+        if (event.target) {
+            event.target.classList.remove('dragging');
+        }
         
-        // Remove drop target highlighting
-        document.querySelectorAll('.drop-target').forEach(square => {
-            square.classList.remove('drop-target');
-        });
+        // Clear all drag highlights
+        this.clearDragHighlights();
         
+        // Clean up drag state
         this.draggedPiece = null;
         this.draggedElement = null;
+    }
+    
+    // Clear drag highlights
+    clearDragHighlights() {
+        document.querySelectorAll('.drop-target, .drag-hover').forEach(element => {
+            element.classList.remove('drop-target', 'drag-hover');
+        });
     }
     
     // Select square
@@ -357,6 +435,8 @@ class ChessGame {
         if (this.gameSettings.showPossibleMoves) {
             this.highlightValidMoves(row, col);
         }
+        
+        console.log('🎯 Square selected:', { row, col });
     }
     
     // Clear selection
@@ -392,13 +472,18 @@ class ChessGame {
         const to = this.rowColToAlgebraic(toRow, toCol);
         
         const moves = this.chess.moves({ verbose: true });
-        return moves.some(move => move.from === from && move.to === to);
+        const isValid = moves.some(move => move.from === from && move.to === to);
+        
+        console.log('🔍 Checking move validity:', { from, to, isValid });
+        return isValid;
     }
     
     // Make a move
     async makeMove(fromRow, fromCol, toRow, toCol) {
         const from = this.rowColToAlgebraic(fromRow, fromCol);
         const to = this.rowColToAlgebraic(toRow, toCol);
+        
+        console.log('🎲 Attempting move:', { from, to });
         
         try {
             // Check for pawn promotion
@@ -413,9 +498,16 @@ class ChessGame {
             }
             
             // Make the move
-            const move = this.chess.move({ from, to, promotion });
+            const moveOptions = { from, to };
+            if (promotion) {
+                moveOptions.promotion = promotion;
+            }
+            
+            const move = this.chess.move(moveOptions);
             
             if (move) {
+                console.log('✅ Move successful:', move);
+                
                 // Sync with engine
                 if (this.engine) {
                     this.engine.chess.load(this.chess.fen());
@@ -445,22 +537,40 @@ class ChessGame {
                 // Check game state
                 this.checkGameState();
                 
-                // AI move if it's AI's turn
-                if (this.gameMode === 'ai' && !this.chess.isGameOver()) {
+                // AI move if it's AI's turn and game is not over
+                if (this.gameMode === 'ai' && 
+                    !this.chess.isGameOver() && 
+                    this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
+                    
+                    console.log('🤖 Triggering AI move...');
                     setTimeout(() => this.makeAIMove(), 500);
                 }
                 
-                console.log('Move made:', move);
+                return true;
+            } else {
+                console.log('❌ Move failed - invalid move');
+                return false;
             }
         } catch (error) {
-            console.error('Invalid move:', error);
+            console.error('❌ Move error:', error);
             this.clearSelection();
+            return false;
         }
     }
     
     // Make AI move
     async makeAIMove() {
-        if (!this.chess || this.chess.isGameOver()) return;
+        if (!this.chess || this.chess.isGameOver()) {
+            console.log('❌ Cannot make AI move - game over');
+            return;
+        }
+        
+        if (this.gameState !== 'playing') {
+            console.log('❌ Cannot make AI move - game not in playing state');
+            return;
+        }
+        
+        console.log('🤖 AI is thinking...');
         
         try {
             // Show thinking indicator
@@ -474,9 +584,13 @@ class ChessGame {
                 const move = await this.engine.getBestMove();
                 
                 if (move) {
+                    console.log('🎯 AI selected move:', move);
+                    
                     const engineMove = this.chess.move(move);
                     
                     if (engineMove) {
+                        console.log('✅ AI move executed:', engineMove);
+                        
                         this.lastMove = { from: move.from, to: move.to };
                         this.gameStats.totalMoves++;
                         
@@ -499,13 +613,13 @@ class ChessGame {
                         
                         // Check game state
                         this.checkGameState();
-                        
-                        console.log('AI move made:', engineMove);
                     }
+                } else {
+                    console.log('❌ AI could not find a move');
                 }
             }
         } catch (error) {
-            console.error('AI move error:', error);
+            console.error('❌ AI move error:', error);
         } finally {
             this.hideThinkingIndicator();
         }
@@ -554,7 +668,7 @@ class ChessGame {
     showThinkingIndicator() {
         const bestMove = document.getElementById('bestMove');
         if (bestMove) {
-            bestMove.textContent = 'AI is thinking...';
+            bestMove.textContent = '🤖 AI is thinking...';
             bestMove.style.color = '#fbbf24';
         }
     }
@@ -563,7 +677,7 @@ class ChessGame {
     hideThinkingIndicator() {
         const bestMove = document.getElementById('bestMove');
         if (bestMove) {
-            bestMove.textContent = 'Ready';
+            bestMove.textContent = '✅ Ready';
             bestMove.style.color = 'rgba(255, 255, 255, 0.9)';
         }
     }
@@ -577,7 +691,7 @@ class ChessGame {
                 this.sounds.checkmate.play();
             } else if (this.chess.inCheck()) {
                 this.sounds.check.play();
-            } else if (move.flags && move.flags.includes('c')) {
+            } else if (move.flags && (move.flags.includes('k') || move.flags.includes('q'))) {
                 this.sounds.castle.play();
             } else if (move.captured) {
                 this.sounds.capture.play();
@@ -585,7 +699,7 @@ class ChessGame {
                 this.sounds.move.play();
             }
         } catch (error) {
-            console.log('Sound play error:', error);
+            console.log('🔊 Sound play error:', error);
         }
     }
     
@@ -621,7 +735,7 @@ class ChessGame {
                     oscillator.start(audioContext.currentTime);
                     oscillator.stop(audioContext.currentTime + 0.2);
                 } catch (error) {
-                    console.log('Sound generation error:', error);
+                    console.log('🔊 Sound generation error:', error);
                 }
             }
         };
@@ -689,7 +803,7 @@ class ChessGame {
     updateDisplay() {
         if (!this.chess) return;
         
-        const turn = this.chess.turn() === 'w' ? 'White' : 'Black';
+        const turn = this.chess.turn() === 'w' ? '⚪ White' : '⚫ Black';
         const turnElement = document.getElementById('currentTurn');
         if (turnElement) {
             turnElement.textContent = turn;
@@ -730,7 +844,7 @@ class ChessGame {
             const elapsed = Math.floor((Date.now() - this.gameStats.startTime) / 1000);
             const minutes = Math.floor(elapsed / 60);
             const seconds = elapsed % 60;
-            elements.gameTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            elements.gameTime.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
     }
     
@@ -752,7 +866,8 @@ class ChessGame {
             
             moveItem.innerHTML = `
                 <span class="move-number">${moveNumber}.</span>
-                <span>${whiteMove} ${blackMove}</span>
+                <span class="move-notation">${whiteMove}</span>
+                ${blackMove ? `<span class="move-notation">${blackMove}</span>` : ''}
             `;
             
             moveList.appendChild(moveItem);
@@ -773,8 +888,7 @@ class ChessGame {
             if (evalBar && evalText) {
                 // Update evaluation bar
                 const percentage = Math.max(0, Math.min(100, (evaluation + 10) * 5));
-                evalBar.style.background = `linear-gradient(90deg, #dc2626 0%, #fbbf24 50%, #16a34a 100%)`;
-                evalBar.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                evalBar.style.width = `${percentage}%`;
                 
                 // Update evaluation text
                 if (Math.abs(evaluation) > 5) {
@@ -784,7 +898,7 @@ class ChessGame {
                 }
             }
         } catch (error) {
-            console.log('Engine analysis error:', error);
+            console.log('🔍 Engine analysis error:', error);
         }
     }
     
@@ -807,6 +921,7 @@ class ChessGame {
                 reason = 'draw';
             }
             
+            console.log('🏁 Game over:', { winner, reason });
             setTimeout(() => this.showGameOver(winner, reason), 1000);
         } else if (this.chess.inCheck()) {
             // Highlight king in check
@@ -847,11 +962,11 @@ class ChessGame {
         const message = document.getElementById('gameOverMessage');
         
         if (title) {
-            title.textContent = winner === 'Draw' ? 'Draw!' : `${winner} Wins!`;
+            title.textContent = winner === 'Draw' ? '🤝 Draw!' : `🏆 ${winner} Wins!`;
         }
         
         if (result) {
-            result.textContent = winner === 'Draw' ? 'Draw' : `${winner} Wins!`;
+            result.textContent = winner === 'Draw' ? '🤝 Draw' : `🏆 ${winner} Wins!`;
         }
         
         if (message) {
@@ -902,6 +1017,8 @@ class ChessGame {
     
     // New game
     newGame() {
+        console.log('🎮 Starting new game...');
+        
         if (this.chess) {
             this.chess.reset();
         }
@@ -913,6 +1030,8 @@ class ChessGame {
         this.selectedSquare = null;
         this.gameState = 'playing';
         this.lastMove = null;
+        this.draggedPiece = null;
+        this.draggedElement = null;
         this.gameStats = {
             totalMoves: 0,
             captures: 0,
@@ -924,6 +1043,7 @@ class ChessGame {
         this.updatePieces();
         this.updateDisplay();
         this.clearSelection();
+        this.clearDragHighlights();
         
         // Close modals
         document.querySelectorAll('.modal').forEach(modal => {
@@ -932,6 +1052,7 @@ class ChessGame {
         
         // If player is black, make AI move first
         if (this.playerColor === 'black') {
+            console.log('🤖 Player is black, AI will move first');
             setTimeout(() => this.makeAIMove(), 1000);
         }
     }
@@ -939,6 +1060,8 @@ class ChessGame {
     // Undo move
     undoMove() {
         if (!this.chess || this.gameStats.totalMoves === 0) return;
+        
+        console.log('↩️ Undoing move...');
         
         // Undo player move
         const undoneMove = this.chess.undo();
@@ -962,6 +1085,7 @@ class ChessGame {
             this.updatePieces();
             this.updateDisplay();
             this.clearSelection();
+            this.clearDragHighlights();
         }
     }
     
@@ -1007,20 +1131,6 @@ class ChessGame {
             
             // Add new theme class
             boardElement.classList.add(`board-theme-${this.gameSettings.boardTheme}`);
-            
-            // Update CSS variables
-            const themes = {
-                'classic': { light: '#f0d9b5', dark: '#b58863' },
-                'wooden': { light: '#d4a574', dark: '#8b4513' },
-                'marble': { light: '#e8e8e8', dark: '#696969' },
-                'glass': { light: 'rgba(255, 255, 255, 0.8)', dark: 'rgba(0, 0, 0, 0.6)' }
-            };
-            
-            const theme = themes[this.gameSettings.boardTheme];
-            if (theme) {
-                document.documentElement.style.setProperty('--light-square', theme.light);
-                document.documentElement.style.setProperty('--dark-square', theme.dark);
-            }
         }
     }
     
@@ -1032,7 +1142,7 @@ class ChessGame {
                 const settings = JSON.parse(saved);
                 this.gameSettings = { ...this.gameSettings, ...settings };
             } catch (error) {
-                console.error('Error loading settings:', error);
+                console.error('❌ Error loading settings:', error);
             }
         }
     }
@@ -1042,7 +1152,7 @@ class ChessGame {
         try {
             localStorage.setItem('chess-settings', JSON.stringify(this.gameSettings));
         } catch (error) {
-            console.error('Error saving settings:', error);
+            console.error('❌ Error saving settings:', error);
         }
     }
     
@@ -1066,10 +1176,10 @@ class ChessGame {
         const difficultyElement = document.getElementById('difficulty');
         if (difficultyElement) {
             const difficultyNames = {
-                'easy': 'Easy',
-                'medium': 'Medium',
-                'hard': 'Hard',
-                'expert': 'Expert'
+                'easy': '🟢 Easy',
+                'medium': '🟡 Medium',
+                'hard': '🔴 Hard',
+                'expert': '⚫ Expert'
             };
             difficultyElement.textContent = difficultyNames[this.gameSettings.difficulty];
         }
@@ -1085,6 +1195,11 @@ class ChessGame {
             };
             aiRating.textContent = ratings[this.gameSettings.difficulty];
         }
+        
+        // Set player color
+        this.playerColor = this.gameSettings.playerColor === 'random' ? 
+            (Math.random() > 0.5 ? 'white' : 'black') : 
+            this.gameSettings.playerColor;
     }
     
     // Show settings modal
@@ -1127,6 +1242,8 @@ class ChessGame {
     
     // Bind events
     bindEvents() {
+        console.log('🔗 Binding events...');
+        
         // Game control buttons
         document.getElementById('newGameBtn')?.addEventListener('click', () => this.newGame());
         document.getElementById('flipBoardBtn')?.addEventListener('click', () => this.flipBoard());
@@ -1172,6 +1289,13 @@ class ChessGame {
             document.getElementById('volumeValue').textContent = e.target.value + '%';
         });
         
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.clearSelection();
+            }
+        });
+        
         // Click outside modal to close
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -1195,10 +1319,7 @@ class ChessGame {
         this.saveSettings();
         this.applySettings();
         
-        // Set player color
-        this.playerColor = this.gameSettings.playerColor === 'random' ? 
-            (Math.random() > 0.5 ? 'white' : 'black') : 
-            this.gameSettings.playerColor;
+        console.log('💾 Settings saved:', this.gameSettings);
     }
     
     // Reset settings
@@ -1229,16 +1350,18 @@ class ChessGame {
         document.getElementById('enableSounds').checked = this.gameSettings.enableSounds;
         document.getElementById('volumeSlider').value = this.gameSettings.volume;
         document.getElementById('volumeValue').textContent = this.gameSettings.volume + '%';
+        
+        console.log('🔄 Settings reset to defaults');
     }
 }
 
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing chess game...');
+    console.log('📱 DOM loaded, initializing chess game...');
     
     // Check if Chess.js is loaded
     if (typeof Chess === 'undefined') {
-        console.error('Chess.js library not loaded!');
+        console.error('❌ Chess.js library not loaded!');
         const boardElement = document.getElementById('chessBoard');
         if (boardElement) {
             boardElement.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Chess.js library failed to load. Please refresh the page.</div>';
@@ -1248,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
         window.game = new ChessGame();
-        console.log('Chess game initialized successfully');
+        console.log('🎉 Chess game initialized successfully');
         
         // Update game statistics every second
         setInterval(() => {
@@ -1258,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
         
     } catch (error) {
-        console.error('Failed to initialize chess game:', error);
+        console.error('❌ Failed to initialize chess game:', error);
         const boardElement = document.getElementById('chessBoard');
         if (boardElement) {
             boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">Failed to initialize chess game: ${error.message}</div>`;
