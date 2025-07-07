@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♔</text></svg>">
+    <!-- Add chess.js library -->
+    <script src="https://unpkg.com/chess.js@1.0.0-beta.6/dist/chess.js"></script>
 </head>
 <body>
     <div class="container">
@@ -139,14 +141,14 @@
                         <label>AI Difficulty:</label>
                         <select id="difficultySelect">
                             <option value="easy">Easy</option>
-                            <option value="medium">Medium</option>
+                            <option value="medium" selected>Medium</option>
                             <option value="hard">Hard</option>
                         </select>
                     </div>
                     <div class="setting-group">
                         <label>Your Color:</label>
                         <select id="playerColorSelect">
-                            <option value="white">White</option>
+                            <option value="white" selected>White</option>
                             <option value="black">Black</option>
                         </select>
                     </div>
@@ -188,7 +190,7 @@
                         <label>Board Theme:</label>
                         <select id="boardThemeSelect">
                             <option value="classic">Classic</option>
-                            <option value="modern">Modern</option>
+                            <option value="modern" selected>Modern</option>
                             <option value="dark">Dark</option>
                             <option value="neon">Neon</option>
                         </select>
@@ -197,7 +199,7 @@
                         <label>Piece Style:</label>
                         <select id="pieceStyleSelect">
                             <option value="classic">Classic</option>
-                            <option value="modern">Modern</option>
+                            <option value="modern" selected>Modern</option>
                             <option value="minimal">Minimal</option>
                         </select>
                     </div>
@@ -263,6 +265,40 @@
         </div>
     </div>
 
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="gameOverTitle">Game Over</h2>
+                <button class="close-btn" id="closeGameOver">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="game-over-content">
+                    <p id="gameOverMessage">Game has ended!</p>
+                    <div class="game-over-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Moves:</span>
+                            <span id="finalMoves" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Game Time:</span>
+                            <span id="finalTime" class="stat-value">0:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Captures:</span>
+                            <span id="finalCaptures" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+                <button id="exportGameBtn" class="btn btn-secondary">Export Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load scripts -->
     <script src="chess-engine.js"></script>
     <script src="game.js"></script>
     <script>
@@ -308,12 +344,48 @@
                 }
             });
             
+            // Close game over modal
+            document.getElementById('closeGameOver').addEventListener('click', () => {
+                document.getElementById('gameOverModal').style.display = 'none';
+            });
+            
+            // Play again button
+            document.getElementById('playAgainBtn').addEventListener('click', () => {
+                document.getElementById('gameOverModal').style.display = 'none';
+                if (window.game && window.game.newGame) {
+                    window.game.newGame();
+                }
+            });
+            
+            // Export game button
+            document.getElementById('exportGameBtn').addEventListener('click', () => {
+                if (window.game && window.game.exportGame) {
+                    window.game.exportGame();
+                }
+            });
+            
             // Keyboard shortcuts
             document.addEventListener('keydown', (e) => {
                 // Show help with F1
                 if (e.key === 'F1') {
                     e.preventDefault();
                     document.getElementById('helpModal').style.display = 'flex';
+                }
+                
+                // New game with Ctrl+N
+                if (e.ctrlKey && e.key === 'n') {
+                    e.preventDefault();
+                    if (window.game && window.game.newGame) {
+                        window.game.newGame();
+                    }
+                }
+                
+                // Flip board with Ctrl+F
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    if (window.game && window.game.flipBoard) {
+                        window.game.flipBoard();
+                    }
                 }
                 
                 // Close modals with Escape
