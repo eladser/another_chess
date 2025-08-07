@@ -1,4 +1,4 @@
-// Enhanced Chess Engine with Advanced AI and Multiple Difficulty Levels - Fixed Version
+// Enhanced Chess Engine with Advanced AI and Multiple Difficulty Levels
 class ChessEngine {
     constructor(difficulty = 'medium') {
         this.difficulty = difficulty;
@@ -131,7 +131,7 @@ class ChessEngine {
         this.principalVariation = [];
     }
     
-    // Safe chess.js method wrappers
+    // Safe chess.js method wrappers with compatibility fixes
     isGameOver() {
         try {
             return this.chess.game_over ? this.chess.game_over() : 
@@ -781,7 +781,7 @@ class ChessEngine {
         return this.chess.fen().split(' ').slice(0, 2).join(' ');
     }
     
-    // Get current evaluation for display
+    // FIXED: Get current evaluation for display with proper mate detection
     getCurrentEvaluation() {
         try {
             if (this.isGameOver()) {
@@ -792,11 +792,65 @@ class ChessEngine {
             }
             
             const evaluation = this.evaluatePosition();
+            // Convert centipawn evaluation to pawn units
             return Math.max(-999, Math.min(999, evaluation / 100));
         } catch (error) {
             console.log('🔍 Engine getCurrentEvaluation error:', error);
             return 0;
         }
+    }
+    
+    // FIXED: Check for forced mate sequences
+    getMateDistance() {
+        try {
+            if (this.inCheckmate()) {
+                return 0; // Mate in 0 (current position)
+            }
+            
+            // Check for mate in 1-3 moves using limited depth search
+            for (let mateDepth = 1; mateDepth <= 3; mateDepth++) {
+                const mateScore = this.searchForMate(mateDepth);
+                if (Math.abs(mateScore) > 900) {
+                    return Math.ceil((1000 - Math.abs(mateScore)) / 100);
+                }
+            }
+            
+            return null; // No forced mate found
+        } catch (error) {
+            console.log('🔍 Mate distance error:', error);
+            return null;
+        }
+    }
+    
+    // Search for forced mate sequences
+    searchForMate(depth) {
+        if (depth === 0) {
+            return this.evaluatePosition();
+        }
+        
+        const moves = this.chess.moves({ verbose: true });
+        let bestScore = -Infinity;
+        
+        for (const move of moves) {
+            this.chess.move(move);
+            
+            if (this.inCheckmate()) {
+                this.chess.undo();
+                return 1000 - depth; // Mate found
+            }
+            
+            const score = -this.searchForMate(depth - 1);
+            this.chess.undo();
+            
+            bestScore = Math.max(bestScore, score);
+            
+            // If we found a mate, return immediately
+            if (score > 900) {
+                return score;
+            }
+        }
+        
+        return bestScore;
     }
     
     // Get best move suggestion for analysis
