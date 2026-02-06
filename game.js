@@ -1,1236 +1,756 @@
-// Advanced Chess Game with Enhanced Features - Fixed Version
+/* Opening name lookup - longest prefix match against move history */
+const OPENINGS = {
+    'e4': "King's Pawn Opening",
+    'e4 e5': 'Open Game',
+    'e4 e5 Nf3 Nc6 Bb5': 'Ruy Lopez',
+    'e4 e5 Nf3 Nc6 Bb5 a6': 'Ruy Lopez: Morphy Defense',
+    'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O': 'Ruy Lopez: Closed',
+    'e4 e5 Nf3 Nc6 Bc4': 'Italian Game',
+    'e4 e5 Nf3 Nc6 Bc4 Bc5': 'Giuoco Piano',
+    'e4 e5 Nf3 Nc6 Bc4 Nf6': 'Two Knights Defense',
+    'e4 e5 Nf3 Nc6 d4': 'Scotch Game',
+    'e4 e5 Nf3 Nf6': "Petrov's Defense",
+    'e4 e5 Nf3 d6': 'Philidor Defense',
+    'e4 e5 f4': "King's Gambit",
+    'e4 c5': 'Sicilian Defense',
+    'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6': 'Sicilian: Najdorf',
+    'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e5': 'Sicilian: Sveshnikov',
+    'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6': 'Sicilian: Classical',
+    'e4 c5 Nf3 e6 d4 cxd4 Nxd4': 'Sicilian: Taimanov',
+    'e4 c5 Nf3 Nc6': 'Sicilian Defense',
+    'e4 c5 c3': 'Sicilian: Alapin',
+    'e4 e6': 'French Defense',
+    'e4 e6 d4 d5': 'French Defense',
+    'e4 e6 d4 d5 Nc3': 'French: Classical',
+    'e4 e6 d4 d5 Nd2': 'French: Tarrasch',
+    'e4 e6 d4 d5 e5': 'French: Advance',
+    'e4 d5': 'Scandinavian Defense',
+    'e4 c6': 'Caro-Kann Defense',
+    'e4 c6 d4 d5': 'Caro-Kann Defense',
+    'e4 c6 d4 d5 Nc3': 'Caro-Kann: Classical',
+    'e4 c6 d4 d5 e5': 'Caro-Kann: Advance',
+    'e4 d6 d4 Nf6 Nc3': 'Pirc Defense',
+    'e4 g6': 'Modern Defense',
+    'd4': "Queen's Pawn Opening",
+    'd4 d5': 'Closed Game',
+    'd4 d5 c4': "Queen's Gambit",
+    'd4 d5 c4 e6': "Queen's Gambit Declined",
+    'd4 d5 c4 dxc4': "Queen's Gambit Accepted",
+    'd4 d5 c4 c6': 'Slav Defense',
+    'd4 d5 c4 c6 Nf3 Nf6 Nc3 e6': 'Semi-Slav Defense',
+    'd4 Nf6 c4 e6 Nc3 Bb4': 'Nimzo-Indian Defense',
+    'd4 Nf6 c4 e6 Nf3 b6': "Queen's Indian Defense",
+    'd4 Nf6 c4 e6 g3': 'Catalan Opening',
+    'd4 Nf6 c4 g6 Nc3 Bg7': "King's Indian Defense",
+    'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6': "King's Indian: Classical",
+    'd4 Nf6 c4 g6 Nc3 d5': 'Gruenfeld Defense',
+    'd4 Nf6 c4 c5 d5 e6': 'Modern Benoni',
+    'c4': 'English Opening',
+    'c4 e5': 'English: Reversed Sicilian',
+    'c4 c5': 'English: Symmetrical',
+    'Nf3': 'Reti Opening',
+    'Nf3 d5 c4': 'Reti Opening',
+    'b3': 'Nimzo-Larsen Attack',
+    'f4': "Bird's Opening",
+};
+
+/* Settings form <-> gameSettings mapping */
+const SETTINGS_MAP = [
+    { id: 'difficultySelect', key: 'difficulty', prop: 'value' },
+    { id: 'playerColorSelect', key: 'playerColor', prop: 'value' },
+    { id: 'boardThemeSelect', key: 'boardTheme', prop: 'value' },
+    { id: 'gameModeSelect', key: 'gameMode', prop: 'value' },
+    { id: 'timeControlSelect', key: 'timeControl', prop: 'value' },
+    { id: 'showCoordinates', key: 'showCoordinates', prop: 'checked' },
+    { id: 'highlightLastMove', key: 'highlightLastMove', prop: 'checked' },
+    { id: 'showPossibleMoves', key: 'showPossibleMoves', prop: 'checked' },
+    { id: 'enableAnimations', key: 'enableAnimations', prop: 'checked' },
+    { id: 'enableSounds', key: 'enableSounds', prop: 'checked' },
+    { id: 'volumeSlider', key: 'volume', prop: 'value', parse: parseInt },
+];
+
+class ChessClock {
+    constructor(whiteMs, blackMs, incrementMs = 0) {
+        this.time = { w: whiteMs, b: blackMs };
+        this.increment = incrementMs;
+        this.running = null;
+        this._interval = null;
+        this._lastTick = null;
+        this.onTick = null;
+        this.onTimeout = null;
+    }
+
+    start(color) {
+        this.stop();
+        this.running = color;
+        this._lastTick = performance.now();
+        this._interval = setInterval(() => this._tick(), 100);
+    }
+
+    stop() {
+        if (this._interval) clearInterval(this._interval);
+        this._interval = null;
+        if (this.running && this.increment) {
+            this.time[this.running] += this.increment;
+        }
+        this.running = null;
+    }
+
+    _tick() {
+        if (!this.running) return;
+        const now = performance.now();
+        this.time[this.running] -= (now - this._lastTick);
+        this._lastTick = now;
+        if (this.onTick) this.onTick(this.running, this.time);
+        if (this.time[this.running] <= 0) {
+            this.time[this.running] = 0;
+            const loser = this.running;
+            this.running = null;
+            clearInterval(this._interval);
+            this._interval = null;
+            if (this.onTimeout) this.onTimeout(loser);
+        }
+    }
+
+    reset(whiteMs, blackMs) {
+        this.stop();
+        this.time = { w: whiteMs, b: blackMs };
+    }
+
+    getTime(color) {
+        return Math.max(0, this.time[color]);
+    }
+
+    static formatTime(ms) {
+        const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
 class ChessGame {
     constructor() {
+        this.chess = null;
         this.engine = null;
-        this.chess = null; // Direct chess.js instance
-        this.selectedSquare = null;
-        this.gameMode = 'ai';
+        this.ui = null;
+        this.clock = null;
         this.playerColor = 'white';
         this.gameState = 'playing';
         this.isFlipped = false;
         this.lastMove = null;
-        this.draggedPiece = null;
-        this.draggedElement = null;
-        this.dragOffset = { x: 0, y: 0 };
-        this.gameSettings = {
-            difficulty: 'medium',
-            playerColor: 'white',
-            showCoordinates: true,
-            highlightLastMove: true,
-            showPossibleMoves: true,
-            enableAnimations: true,
-            enableSounds: true,
-            volume: 50,
-            boardTheme: 'classic'
-        };
-        
-        this.gameStats = {
-            totalMoves: 0,
-            captures: 0,
-            checks: 0,
-            startTime: Date.now(),
-            accuracy: 0
-        };
-        
-        this.sounds = {
-            move: this.createSound('move'),
-            capture: this.createSound('capture'),
-            check: this.createSound('check'),
-            checkmate: this.createSound('checkmate'),
-            castle: this.createSound('castle')
-        };
-        
-        this.initializeGame();
-    }
-    
-    // Initialize the game
-    async initializeGame() {
-        console.log('🎮 Initializing chess game...');
-        
-        // Show loading screen
-        this.showLoadingScreen();
-        
-        try {
-            // Check if Chess.js is loaded
-            if (typeof Chess === 'undefined') {
-                throw new Error('Chess.js library not loaded!');
-            }
-            
-            // Initialize chess.js directly
-            this.chess = new Chess();
-            console.log('✅ Chess.js initialized successfully');
-            
-            // Initialize chess engine
-            this.engine = new ChessEngine(this.gameSettings.difficulty);
-            console.log('✅ Chess engine initialized successfully');
-            
-            // Load settings
-            this.loadSettings();
-            
-            // Create board and setup game
-            this.createBoard();
-            this.updatePieces();
-            this.updateDisplay();
-            this.bindEvents();
-            
-            // Apply board theme and settings
-            this.applyBoardTheme();
-            this.applySettings();
-            
-            // Hide loading screen
-            this.hideLoadingScreen();
-            
-            console.log('🎉 Game initialized successfully');
-        } catch (error) {
-            console.error('❌ Error initializing game:', error);
-            this.showError('Failed to initialize chess game: ' + error.message);
-        }
-    }
-    
-    // Show loading screen
-    showLoadingScreen() {
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-            loadingScreen.style.display = 'flex';
-        }
-    }
-    
-    // Hide loading screen
-    hideLoadingScreen() {
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-            loadingScreen.style.display = 'none';
-        }
-    }
-    
-    // Show error message
-    showError(message) {
-        const boardElement = document.getElementById('chessBoard');
-        if (boardElement) {
-            boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px; font-size: 16px; line-height: 1.5;">${message}<br><br>Please refresh the page to try again.</div>`;
-        }
-        this.hideLoadingScreen();
-    }
-    
-    // Create chess board
-    createBoard() {
-        const boardElement = document.getElementById('chessBoard');
-        if (!boardElement) {
-            throw new Error('Board element not found!');
-        }
-        
-        boardElement.innerHTML = '';
-        
-        // Create 8x8 board
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const square = document.createElement('div');
-                square.className = 'square';
-                square.dataset.row = row;
-                square.dataset.col = col;
-                square.dataset.square = this.rowColToAlgebraic(row, col);
-                
-                // Add proper square coloring based on chess board pattern
-                if ((row + col) % 2 === 0) {
-                    square.classList.add('light-square');
-                } else {
-                    square.classList.add('dark-square');
-                }
-                
-                // Add click and drag event listeners
-                square.addEventListener('click', (e) => this.handleSquareClick(e));
-                square.addEventListener('dragover', (e) => this.handleDragOver(e));
-                square.addEventListener('drop', (e) => this.handleDrop(e));
-                square.addEventListener('dragenter', (e) => this.handleDragEnter(e));
-                square.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-                
-                boardElement.appendChild(square);
-            }
-        }
-        
-        console.log('✅ Board created successfully');
-    }
-    
-    // Update pieces on board
-    updatePieces() {
-        if (!this.chess) return;
-        
-        const squares = document.querySelectorAll('.square');
-        squares.forEach(square => {
-            const row = parseInt(square.dataset.row);
-            const col = parseInt(square.dataset.col);
-            
-            // Clear previous piece
-            square.innerHTML = '';
-            
-            // Get piece from chess.js
-            const algebraicSquare = this.rowColToAlgebraic(row, col);
-            const piece = this.chess.get(algebraicSquare);
-            
-            if (piece) {
-                const pieceElement = document.createElement('div');
-                pieceElement.className = 'piece';
-                pieceElement.draggable = true;
-                
-                // Add piece symbol
-                pieceElement.innerHTML = this.getPieceSymbol(piece);
-                
-                // Add color class
-                pieceElement.classList.add(piece.color === 'w' ? 'white-piece' : 'black-piece');
-                
-                // Add data attributes for identification
-                pieceElement.dataset.piece = piece.type;
-                pieceElement.dataset.color = piece.color;
-                pieceElement.dataset.square = algebraicSquare;
-                
-                // Add drag event listeners
-                pieceElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
-                pieceElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
-                
-                // Prevent default drag behavior on images
-                pieceElement.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-                
-                square.appendChild(pieceElement);
-            }
-        });
-        
-        // Update captured pieces
-        this.updateCapturedPieces();
-        
-        console.log('✅ Pieces updated');
-    }
-    
-    // Get piece symbol
-    getPieceSymbol(piece) {
-        const symbols = {
-            'p': { 'w': '♙', 'b': '♟' },
-            'r': { 'w': '♖', 'b': '♜' },
-            'n': { 'w': '♘', 'b': '♞' },
-            'b': { 'w': '♗', 'b': '♝' },
-            'q': { 'w': '♕', 'b': '♛' },
-            'k': { 'w': '♔', 'b': '♚' }
-        };
-        return symbols[piece.type][piece.color] || '?';
-    }
-    
-    // Convert row/col to algebraic notation
-    rowColToAlgebraic(row, col) {
-        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-        return files[col] + ranks[row];
-    }
-    
-    // Convert algebraic to row/col
-    algebraicToRowCol(algebraic) {
-        const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-        const col = files.indexOf(algebraic[0]);
-        const row = ranks.indexOf(algebraic[1]);
-        return { row, col };
-    }
-    
-    // Handle square click
-    handleSquareClick(event) {
-        if (this.gameState !== 'playing') return;
-        
-        // Prevent click if we're dragging
-        if (this.draggedPiece) return;
-        
-        const square = event.currentTarget;
-        const row = parseInt(square.dataset.row);
-        const col = parseInt(square.dataset.col);
-        
-        // Check if it's player's turn
-        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
-            console.log('❌ Not your turn!');
-            return;
-        }
-        
-        const algebraicSquare = this.rowColToAlgebraic(row, col);
-        const piece = this.chess.get(algebraicSquare);
-        
-        if (this.selectedSquare) {
-            // Try to make a move
-            if (this.isValidMove(this.selectedSquare.row, this.selectedSquare.col, row, col)) {
-                this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
-            } else {
-                this.clearSelection();
-                // If clicked on own piece, select it
-                if (piece && piece.color === this.chess.turn()) {
-                    this.selectSquare(row, col);
-                }
-            }
-        } else {
-            // Select piece if it belongs to current player
-            if (piece && piece.color === this.chess.turn()) {
-                this.selectSquare(row, col);
-            }
-        }
-    }
-    
-    // Handle drag start
-    handleDragStart(event) {
-        if (this.gameState !== 'playing') {
-            event.preventDefault();
-            return;
-        }
-        
-        const square = event.target.parentElement;
-        const row = parseInt(square.dataset.row);
-        const col = parseInt(square.dataset.col);
-        const piece = this.chess.get(this.rowColToAlgebraic(row, col));
-        
-        // Check if it's player's turn
-        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
-            event.preventDefault();
-            return;
-        }
-        
-        // Check if piece belongs to current player
-        if (!piece || piece.color !== this.chess.turn()) {
-            event.preventDefault();
-            return;
-        }
-        
-        this.draggedPiece = { row, col, piece };
-        this.draggedElement = event.target;
-        
-        // Add dragging class
-        event.target.classList.add('dragging');
-        
-        // Calculate drag offset
-        const rect = event.target.getBoundingClientRect();
-        this.dragOffset = {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
-        };
-        
-        // Set drag data
-        event.dataTransfer.setData('text/plain', JSON.stringify({ row, col }));
-        event.dataTransfer.effectAllowed = 'move';
-        
-        // Create drag image
-        const dragImage = event.target.cloneNode(true);
-        dragImage.style.transform = 'scale(1.2)';
-        dragImage.style.opacity = '0.8';
-        document.body.appendChild(dragImage);
-        event.dataTransfer.setDragImage(dragImage, this.dragOffset.x, this.dragOffset.y);
-        
-        // Remove drag image after setting
-        setTimeout(() => {
-            if (document.body.contains(dragImage)) {
-                document.body.removeChild(dragImage);
-            }
-        }, 0);
-        
-        // Select the square and show possible moves
-        this.selectSquare(row, col);
-        
-        console.log('🎯 Drag started:', { row, col, piece });
-    }
-    
-    // Handle drag enter
-    handleDragEnter(event) {
-        if (!this.draggedPiece) return;
-        
-        event.preventDefault();
-        
-        const square = event.currentTarget;
-        const row = parseInt(square.dataset.row);
-        const col = parseInt(square.dataset.col);
-        
-        // Check if this is a valid drop target
-        if (this.isValidMove(this.draggedPiece.row, this.draggedPiece.col, row, col)) {
-            square.classList.add('drag-hover');
-        }
-    }
-    
-    // Handle drag leave
-    handleDragLeave(event) {
-        if (!this.draggedPiece) return;
-        
-        const square = event.currentTarget;
-        square.classList.remove('drag-hover');
-    }
-    
-    // Handle drag over
-    handleDragOver(event) {
-        if (!this.draggedPiece) return;
-        
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        
-        const square = event.currentTarget;
-        const row = parseInt(square.dataset.row);
-        const col = parseInt(square.dataset.col);
-        
-        // Check if this is a valid drop target
-        if (this.isValidMove(this.draggedPiece.row, this.draggedPiece.col, row, col)) {
-            square.classList.add('drop-target');
-        }
-    }
-    
-    // Handle drop
-    handleDrop(event) {
-        event.preventDefault();
-        
-        if (!this.draggedPiece) return;
-        
-        const square = event.currentTarget;
-        const row = parseInt(square.dataset.row);
-        const col = parseInt(square.dataset.col);
-        
-        // Remove all drag-related classes
-        this.clearDragHighlights();
-        
-        // Try to make the move
-        if (this.isValidMove(this.draggedPiece.row, this.draggedPiece.col, row, col)) {
-            console.log('✅ Valid drop - making move');
-            this.makeMove(this.draggedPiece.row, this.draggedPiece.col, row, col);
-        } else {
-            console.log('❌ Invalid drop');
-        }
-        
-        // Clean up drag state
-        this.draggedPiece = null;
-        this.draggedElement = null;
-    }
-    
-    // Handle drag end
-    handleDragEnd(event) {
-        console.log('🏁 Drag ended');
-        
-        // Remove dragging class
-        if (event.target) {
-            event.target.classList.remove('dragging');
-        }
-        
-        // Clear all drag highlights
-        this.clearDragHighlights();
-        
-        // Clean up drag state
-        this.draggedPiece = null;
-        this.draggedElement = null;
-    }
-    
-    // Clear drag highlights
-    clearDragHighlights() {
-        document.querySelectorAll('.drop-target, .drag-hover').forEach(element => {
-            element.classList.remove('drop-target', 'drag-hover');
-        });
-    }
-    
-    // Select square
-    selectSquare(row, col) {
-        this.clearSelection();
-        this.selectedSquare = { row, col };
-        
-        const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-        if (square) {
-            square.classList.add('selected');
-        }
-        
-        if (this.gameSettings.showPossibleMoves) {
-            this.highlightValidMoves(row, col);
-        }
-        
-        console.log('🎯 Square selected:', { row, col });
-    }
-    
-    // Clear selection
-    clearSelection() {
-        document.querySelectorAll('.square').forEach(square => {
-            square.classList.remove('selected', 'valid-move', 'capture-move');
-        });
         this.selectedSquare = null;
-    }
-    
-    // Highlight valid moves
-    highlightValidMoves(row, col) {
-        const algebraicSquare = this.rowColToAlgebraic(row, col);
-        const moves = this.chess.moves({ square: algebraicSquare, verbose: true });
-        
-        moves.forEach(move => {
-            const { row: toRow, col: toCol } = this.algebraicToRowCol(move.to);
-            const square = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
-            
-            if (square) {
-                if (move.captured) {
-                    square.classList.add('capture-move');
-                } else {
-                    square.classList.add('valid-move');
-                }
-            }
+        this._aiMoveInProgress = false;
+        this._aiMoveTimer = null;
+        this._audioContext = null;
+        this._historyViewIndex = -1;
+        this._playerMoveScores = [];
+        this._lastSuggestion = null;
+        this._analysisTimer = null;
+        this._premove = null;
+
+        this.gameSettings = {
+            difficulty: 'medium', playerColor: 'white', gameMode: 'ai',
+            timeControl: 'none', showCoordinates: true, highlightLastMove: true,
+            showPossibleMoves: true, enableAnimations: true, enableSounds: true,
+            volume: 50, boardTheme: 'classic'
+        };
+
+        this.gameStats = {
+            totalMoves: 0, captures: 0, checks: 0,
+            startTime: Date.now(), accuracy: 0
+        };
+
+        this.sounds = {};
+        this._initSounds();
+        this.initializeGame().catch(err => {
+            console.error('Init error:', err);
+            if (this.ui) this.ui.hideLoading();
         });
     }
-    
-    // Check if move is valid
-    isValidMove(fromRow, fromCol, toRow, toCol) {
-        const from = this.rowColToAlgebraic(fromRow, fromCol);
-        const to = this.rowColToAlgebraic(toRow, toCol);
-        
-        const moves = this.chess.moves({ verbose: true });
-        const isValid = moves.some(move => move.from === from && move.to === to);
-        
-        console.log('🔍 Checking move validity:', { from, to, isValid });
-        return isValid;
+
+    get gameMode() { return this.gameSettings.gameMode; }
+
+    _getAudioContext() {
+        if (!this._audioContext) {
+            this._audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this._audioContext.state === 'suspended') this._audioContext.resume();
+        return this._audioContext;
     }
-    
-    // Make a move
-    async makeMove(fromRow, fromCol, toRow, toCol) {
-        const from = this.rowColToAlgebraic(fromRow, fromCol);
-        const to = this.rowColToAlgebraic(toRow, toCol);
-        
-        console.log('🎲 Attempting move:', { from, to });
-        
+
+    _initSounds() {
+        const types = {
+            move: { freq: 440, duration: 0.15 },
+            capture: { freq: 330, duration: 0.2 },
+            check: { freq: 660, duration: 0.25 },
+            checkmate: { freq: 220, duration: 0.4 },
+            castle: { freq: 550, duration: 0.2 }
+        };
+        for (const [name, config] of Object.entries(types)) {
+            this.sounds[name] = { play: () => this._playTone(config.freq, config.duration) };
+        }
+    }
+
+    _playTone(frequency, duration) {
+        if (!this.gameSettings.enableSounds) return;
         try {
-            // Check for pawn promotion
-            const piece = this.chess.get(from);
-            let promotion = null;
-            
-            if (piece && piece.type === 'p') {
-                const promotionRow = piece.color === 'w' ? 0 : 7;
-                if (toRow === promotionRow) {
-                    promotion = await this.showPromotionDialog(piece.color);
-                }
-            }
-            
-            // Make the move
-            const moveOptions = { from, to };
-            if (promotion) {
-                moveOptions.promotion = promotion;
-            }
-            
-            const move = this.chess.move(moveOptions);
-            
-            if (move) {
-                console.log('✅ Move successful:', move);
-                
-                // Sync with engine
-                if (this.engine) {
-                    this.engine.chess.load(this.chess.fen());
-                }
-                
-                this.lastMove = { from, to };
-                this.gameStats.totalMoves++;
-                
-                // Update statistics
-                if (move.captured) {
-                    this.gameStats.captures++;
-                }
-                
-                if (this.chess.inCheck()) {
-                    this.gameStats.checks++;
-                }
-                
-                // Play sound
-                this.playMoveSound(move);
-                
-                // Update display
-                this.clearSelection();
-                this.updatePieces();
-                this.updateDisplay();
-                this.highlightLastMove();
-                
-                // Check game state
-                this.checkGameState();
-                
-                // AI move if it's AI's turn and game is not over
-                if (this.gameMode === 'ai' && 
-                    !this.chess.isGameOver() && 
-                    this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
-                    
-                    console.log('🤖 Triggering AI move...');
-                    setTimeout(() => this.makeAIMove(), 500);
-                }
-                
-                return true;
-            } else {
-                console.log('❌ Move failed - invalid move');
-                return false;
-            }
-        } catch (error) {
-            console.error('❌ Move error:', error);
-            this.clearSelection();
-            return false;
-        }
+            const ctx = this._getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = frequency;
+            osc.type = 'sine';
+            const vol = this.gameSettings.volume / 100 * 0.1;
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) { /* AudioContext may not be available */ }
     }
-    
-    // Make AI move
-    async makeAIMove() {
-        if (!this.chess || this.chess.isGameOver()) {
-            console.log('❌ Cannot make AI move - game over');
-            return;
-        }
-        
-        if (this.gameState !== 'playing') {
-            console.log('❌ Cannot make AI move - game not in playing state');
-            return;
-        }
-        
-        console.log('🤖 AI is thinking...');
-        
-        try {
-            // Show thinking indicator
-            this.showThinkingIndicator();
-            
-            // Sync engine with current position
-            if (this.engine) {
-                this.engine.chess.load(this.chess.fen());
-                
-                // Get best move from AI
-                const move = await this.engine.getBestMove();
-                
-                if (move) {
-                    console.log('🎯 AI selected move:', move);
-                    
-                    const engineMove = this.chess.move(move);
-                    
-                    if (engineMove) {
-                        console.log('✅ AI move executed:', engineMove);
-                        
-                        this.lastMove = { from: move.from, to: move.to };
-                        this.gameStats.totalMoves++;
-                        
-                        // Update statistics
-                        if (engineMove.captured) {
-                            this.gameStats.captures++;
-                        }
-                        
-                        if (this.chess.inCheck()) {
-                            this.gameStats.checks++;
-                        }
-                        
-                        // Play sound
-                        this.playMoveSound(engineMove);
-                        
-                        // Update display
-                        this.updatePieces();
-                        this.updateDisplay();
-                        this.highlightLastMove();
-                        
-                        // Check game state
-                        this.checkGameState();
-                    }
-                } else {
-                    console.log('❌ AI could not find a move');
-                }
-            }
-        } catch (error) {
-            console.error('❌ AI move error:', error);
-        } finally {
-            this.hideThinkingIndicator();
-        }
-    }
-    
-    // Show promotion dialog
-    showPromotionDialog(color) {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('promotionModal');
-            const pieces = modal.querySelectorAll('.promotion-piece');
-            
-            // Update piece colors
-            pieces.forEach(piece => {
-                const pieceType = piece.dataset.piece;
-                const symbols = {
-                    'q': color === 'w' ? '♕' : '♛',
-                    'r': color === 'w' ? '♖' : '♜',
-                    'b': color === 'w' ? '♗' : '♝',
-                    'n': color === 'w' ? '♘' : '♞'
-                };
-                piece.innerHTML = symbols[pieceType];
-                piece.style.color = color === 'w' ? '#ffffff' : '#2a2a2a';
-            });
-            
-            // Show modal
-            modal.style.display = 'flex';
-            
-            // Handle selection
-            const handleSelection = (e) => {
-                const selectedPiece = e.target.dataset.piece;
-                modal.style.display = 'none';
-                
-                // Remove event listeners
-                pieces.forEach(p => p.removeEventListener('click', handleSelection));
-                
-                resolve(selectedPiece);
-            };
-            
-            pieces.forEach(piece => {
-                piece.addEventListener('click', handleSelection);
-            });
-        });
-    }
-    
-    // Show thinking indicator
-    showThinkingIndicator() {
-        const bestMove = document.getElementById('bestMove');
-        if (bestMove) {
-            bestMove.textContent = '🤖 AI is thinking...';
-            bestMove.style.color = '#fbbf24';
-        }
-    }
-    
-    // Hide thinking indicator
-    hideThinkingIndicator() {
-        const bestMove = document.getElementById('bestMove');
-        if (bestMove) {
-            bestMove.textContent = '✅ Ready';
-            bestMove.style.color = 'rgba(255, 255, 255, 0.9)';
-        }
-    }
-    
-    // Play move sound
+
     playMoveSound(move) {
         if (!this.gameSettings.enableSounds) return;
-        
-        try {
-            if (this.chess.isCheckmate()) {
-                this.sounds.checkmate.play();
-            } else if (this.chess.inCheck()) {
-                this.sounds.check.play();
-            } else if (move.flags && (move.flags.includes('k') || move.flags.includes('q'))) {
-                this.sounds.castle.play();
-            } else if (move.captured) {
-                this.sounds.capture.play();
+        if (ChessCompat.isCheckmate(this.chess)) this.sounds.checkmate.play();
+        else if (ChessCompat.inCheck(this.chess)) this.sounds.check.play();
+        else if (move.flags && (move.flags.includes('k') || move.flags.includes('q'))) this.sounds.castle.play();
+        else if (move.captured) this.sounds.capture.play();
+        else this.sounds.move.play();
+    }
+
+    async initializeGame() {
+        if (typeof Chess === 'undefined') throw new Error('Chess.js not loaded');
+
+        this.chess = new Chess();
+        this.engine = new ChessEngine(this.gameSettings.difficulty);
+        this.ui = new ChessUI(this);
+
+        this.loadSettings();
+        this.ui.init();
+        this.applySettings();
+        this._loadAutoSave();
+        this._refreshBoard();
+        this._deferAnalysis();
+        this.ui.hideLoading();
+
+        window.addEventListener('beforeunload', () => this._autoSave());
+    }
+
+    handleSquareClick(row, col) {
+        if (this.gameState !== 'playing') return;
+        if (this._historyViewIndex !== -1) { this.goToLive(); return; }
+
+        const playerTurnColor = this.playerColor === 'white' ? 'w' : 'b';
+
+        if (this._aiMoveInProgress && this.gameMode === 'ai') {
+            const algebraic = this._rowColToAlgebraic(row, col);
+            const piece = this.chess.get(algebraic);
+
+            if (this.selectedSquare) {
+                const from = this.selectedSquare;
+                if (from.row === row && from.col === col) {
+                    this.ui.clearSelection();
+                    this.selectedSquare = null;
+                    return;
+                }
+                if (piece && piece.color === playerTurnColor) {
+                    this.ui.clearSelection();
+                    this._selectPiece(row, col);
+                    return;
+                }
+                this._setPremove(from.row, from.col, row, col);
+                this.ui.clearSelection();
+                this.selectedSquare = null;
+                return;
+            }
+            if (piece && piece.color === playerTurnColor) {
+                this._clearPremove();
+                this._selectPiece(row, col);
+            }
+            return;
+        }
+
+        if (this._aiMoveInProgress) return;
+
+        const currentTurn = this.chess.turn();
+        if (this.gameMode === 'ai' && currentTurn !== playerTurnColor) return;
+
+        const algebraic = this._rowColToAlgebraic(row, col);
+        const piece = this.chess.get(algebraic);
+
+        if (this.selectedSquare) {
+            const from = this.selectedSquare;
+            if (this._isValidMove(from.row, from.col, row, col)) {
+                this.handleMove(from.row, from.col, row, col);
             } else {
-                this.sounds.move.play();
+                this.ui.clearSelection();
+                this.selectedSquare = null;
+                if (piece && piece.color === currentTurn) this._selectPiece(row, col);
             }
-        } catch (error) {
-            console.log('🔊 Sound play error:', error);
+        } else if (piece && piece.color === currentTurn) {
+            this._selectPiece(row, col);
         }
     }
-    
-    // Create sound
-    createSound(type) {
-        const frequencies = {
-            'move': 440,
-            'capture': 330,
-            'check': 660,
-            'checkmate': 220,
-            'castle': 550
-        };
-        
-        return {
-            play: () => {
-                if (!this.gameSettings.enableSounds) return;
-                
-                try {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.value = frequencies[type];
-                    oscillator.type = 'sine';
-                    
-                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(this.gameSettings.volume / 100 * 0.1, audioContext.currentTime + 0.01);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-                    
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.2);
-                } catch (error) {
-                    console.log('🔊 Sound generation error:', error);
-                }
+
+    canInteract(row, col) {
+        if (this.gameState !== 'playing' || this._historyViewIndex !== -1) return false;
+        const playerTurnColor = this.playerColor === 'white' ? 'w' : 'b';
+        if (this._aiMoveInProgress && this.gameMode === 'ai') {
+            const algebraic = this._rowColToAlgebraic(row, col);
+            const piece = this.chess.get(algebraic);
+            return !!piece && piece.color === playerTurnColor;
+        }
+        if (this._aiMoveInProgress) return false;
+        const algebraic = this._rowColToAlgebraic(row, col);
+        const piece = this.chess.get(algebraic);
+        if (!piece || piece.color !== this.chess.turn()) return false;
+        if (this.gameMode === 'ai' && this.chess.turn() !== playerTurnColor) return false;
+        return true;
+    }
+
+    getValidMoves(row, col) {
+        return this.chess.moves({ square: this._rowColToAlgebraic(row, col), verbose: true });
+    }
+
+    async handleMove(fromRow, fromCol, toRow, toCol, opts = {}) {
+        if (this._aiMoveInProgress && this.gameMode === 'ai' && !opts.isPremove) {
+            this._setPremove(fromRow, fromCol, toRow, toCol);
+            return false;
+        }
+
+        const from = this._rowColToAlgebraic(fromRow, fromCol);
+        const to = this._rowColToAlgebraic(toRow, toCol);
+
+        const piece = this.chess.get(from);
+        let promotion = null;
+        if (piece && piece.type === 'p') {
+            const promoRank = piece.color === 'w' ? 0 : 7;
+            if (toRow === promoRank) {
+                promotion = opts.autoQueen ? 'q' : await this.ui.showPromotionDialog(piece.color);
             }
-        };
+        }
+
+        const moveOpts = { from, to };
+        if (promotion) moveOpts.promotion = promotion;
+
+        const preMoveHint = this._lastSuggestion;
+
+        const move = this.chess.move(moveOpts);
+        if (!move) return false;
+
+        if (this.engine) this.engine.chess.load(this.chess.fen());
+        this.lastMove = { from, to };
+        this.gameStats.totalMoves++;
+        if (move.captured) this.gameStats.captures++;
+        if (ChessCompat.inCheck(this.chess)) this.gameStats.checks++;
+        this._updateAccuracy(from, to, preMoveHint);
+        this.playMoveSound(move);
+        this.ui.announce(`${move.color === 'w' ? 'White' : 'Black'} played ${move.san}`);
+
+        this.ui.clearSelection();
+        this.ui.clearArrows();
+        this.selectedSquare = null;
+        await this.ui.animateMove(from, to);
+        this._refreshBoard();
+        this._deferAnalysis();
+
+        if (this._checkGameEnd()) return true;
+        if (this.clock) this.clock.start(this.chess.turn());
+        if (this.gameMode === 'ai' && this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b')) {
+            this._scheduleAIMove();
+        }
+        this._autoSave();
+        return true;
     }
-    
-    // Update captured pieces
-    updateCapturedPieces() {
-        const history = this.chess.history({ verbose: true });
-        const capturedWhite = [];
-        const capturedBlack = [];
-        
-        history.forEach(move => {
-            if (move.captured) {
-                const symbols = {
-                    'p': { 'w': '♙', 'b': '♟' },
-                    'r': { 'w': '♖', 'b': '♜' },
-                    'n': { 'w': '♘', 'b': '♞' },
-                    'b': { 'w': '♗', 'b': '♝' },
-                    'q': { 'w': '♕', 'b': '♛' }
-                };
-                
-                const symbol = symbols[move.captured][move.color === 'w' ? 'b' : 'w'];
-                if (move.color === 'w') {
-                    capturedWhite.push(symbol);
-                } else {
-                    capturedBlack.push(symbol);
-                }
-            }
-        });
-        
-        // Update display
-        const topCaptured = document.getElementById('topCaptured');
-        const bottomCaptured = document.getElementById('bottomCaptured');
-        
-        if (topCaptured) {
-            topCaptured.innerHTML = capturedBlack.map(p => `<span class="captured-piece">${p}</span>`).join('');
-        }
-        
-        if (bottomCaptured) {
-            bottomCaptured.innerHTML = capturedWhite.map(p => `<span class="captured-piece">${p}</span>`).join('');
-        }
+
+    _scheduleAIMove() {
+        clearTimeout(this._aiMoveTimer);
+        this._aiMoveTimer = setTimeout(() => this._executeAIMove(), 300);
     }
-    
-    // Highlight last move
-    highlightLastMove() {
-        // Clear previous highlights
-        document.querySelectorAll('.last-move').forEach(square => {
-            square.classList.remove('last-move');
-        });
-        
-        if (this.gameSettings.highlightLastMove && this.lastMove) {
-            const { from, to } = this.lastMove;
-            const fromPos = this.algebraicToRowCol(from);
-            const toPos = this.algebraicToRowCol(to);
-            
-            const fromSquare = document.querySelector(`[data-row="${fromPos.row}"][data-col="${fromPos.col}"]`);
-            const toSquare = document.querySelector(`[data-row="${toPos.row}"][data-col="${toPos.col}"]`);
-            
-            if (fromSquare) fromSquare.classList.add('last-move');
-            if (toSquare) toSquare.classList.add('last-move');
-        }
-    }
-    
-    // Update display
-    updateDisplay() {
-        if (!this.chess) return;
-        
-        const turn = this.chess.turn() === 'w' ? '⚪ White' : '⚫ Black';
-        const turnElement = document.getElementById('currentTurn');
-        if (turnElement) {
-            turnElement.textContent = turn;
-        }
-        
-        this.updateGameStats();
-        this.updateMoveHistory();
-        this.updateEngineAnalysis();
-    }
-    
-    // Update game statistics
-    updateGameStats() {
-        const elements = {
-            totalMoves: document.getElementById('totalMoves'),
-            captures: document.getElementById('captures'),
-            checks: document.getElementById('checks'),
-            accuracy: document.getElementById('accuracy'),
-            gameTime: document.getElementById('gameTime')
-        };
-        
-        if (elements.totalMoves) {
-            elements.totalMoves.textContent = this.gameStats.totalMoves;
-        }
-        
-        if (elements.captures) {
-            elements.captures.textContent = this.gameStats.captures;
-        }
-        
-        if (elements.checks) {
-            elements.checks.textContent = this.gameStats.checks;
-        }
-        
-        if (elements.accuracy) {
-            elements.accuracy.textContent = this.gameStats.accuracy > 0 ? `${this.gameStats.accuracy}%` : '--';
-        }
-        
-        if (elements.gameTime) {
-            const elapsed = Math.floor((Date.now() - this.gameStats.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            elements.gameTime.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-    }
-    
-    // Update move history
-    updateMoveHistory() {
-        const moveList = document.getElementById('moveList');
-        if (!moveList || !this.chess) return;
-        
-        moveList.innerHTML = '';
-        const history = this.chess.history();
-        
-        for (let i = 0; i < history.length; i += 2) {
-            const moveItem = document.createElement('div');
-            moveItem.className = 'move-item';
-            
-            const moveNumber = Math.floor(i / 2) + 1;
-            const whiteMove = history[i] || '';
-            const blackMove = history[i + 1] || '';
-            
-            moveItem.innerHTML = `
-                <span class="move-number">${moveNumber}.</span>
-                <span class="move-notation">${whiteMove}</span>
-                ${blackMove ? `<span class="move-notation">${blackMove}</span>` : ''}
-            `;
-            
-            moveList.appendChild(moveItem);
-        }
-        
-        moveList.scrollTop = moveList.scrollHeight;
-    }
-    
-    // Update engine analysis
-    updateEngineAnalysis() {
-        if (!this.engine || !this.chess) return;
-        
+
+    async _executeAIMove() {
+        if (this._aiMoveInProgress || this.gameState !== 'playing') return;
+        if (ChessCompat.isGameOver(this.chess)) return;
+
+        this._aiMoveInProgress = true;
+        this.ui.showThinking();
+
         try {
-            const evaluation = this.engine.getCurrentEvaluation();
-            const evalBar = document.getElementById('evalBar');
-            const evalText = document.getElementById('evalText');
-            
-            if (evalBar && evalText) {
-                // Update evaluation bar
-                const percentage = Math.max(0, Math.min(100, (evaluation + 10) * 5));
-                evalBar.style.width = `${percentage}%`;
-                
-                // Update evaluation text
-                if (Math.abs(evaluation) > 5) {
-                    evalText.textContent = evaluation > 0 ? '+M' : '-M';
-                } else {
-                    evalText.textContent = evaluation > 0 ? `+${evaluation.toFixed(1)}` : evaluation.toFixed(1);
-                }
+            this.engine.chess.load(this.chess.fen());
+            const move = await this.engine.getBestMove();
+            if (!move || this.gameState !== 'playing') return;
+
+            let result = this.chess.move(move);
+            if (!result) {
+                const legal = this.chess.moves({ verbose: true });
+                if (legal.length === 0) return;
+                result = this.chess.move(legal[0]);
             }
+
+            this.engine.chess.load(this.chess.fen());
+            this.lastMove = { from: result.from, to: result.to };
+            this.gameStats.totalMoves++;
+            if (result.captured) this.gameStats.captures++;
+            if (ChessCompat.inCheck(this.chess)) this.gameStats.checks++;
+            this.playMoveSound(result);
+            this.ui.announce(`AI played ${result.san}`);
+
+            await this.ui.animateMove(result.from, result.to);
+            this._refreshBoard();
+            this._deferAnalysis();
+            this._checkGameEnd();
+            this._autoSave();
+            if (this.clock) this.clock.start(this.chess.turn());
         } catch (error) {
-            console.log('🔍 Engine analysis error:', error);
+            console.error('AI error:', error);
+        } finally {
+            this._aiMoveInProgress = false;
+            this.ui.hideThinking();
+        }
+
+        if (this._premove && this.gameState === 'playing') {
+            await this._tryPremove();
         }
     }
-    
-    // Check game state
-    checkGameState() {
-        if (!this.chess) return;
-        
-        if (this.chess.isGameOver()) {
-            this.gameState = 'ended';
-            
-            let winner = 'Draw';
-            let reason = 'unknown';
-            
-            if (this.chess.isCheckmate()) {
-                winner = this.chess.turn() === 'w' ? 'Black' : 'White';
-                reason = 'checkmate';
-            } else if (this.chess.isStalemate()) {
-                reason = 'stalemate';
-            } else if (this.chess.isDraw()) {
-                reason = 'draw';
-            }
-            
-            console.log('🏁 Game over:', { winner, reason });
-            setTimeout(() => this.showGameOver(winner, reason), 1000);
-        } else if (this.chess.inCheck()) {
-            // Highlight king in check
-            this.highlightKingInCheck();
-        }
-    }
-    
-    // Highlight king in check
-    highlightKingInCheck() {
-        // Remove previous check highlights
-        document.querySelectorAll('.in-check').forEach(square => {
-            square.classList.remove('in-check');
-        });
-        
-        // Find and highlight king in check
-        const board = this.chess.board();
-        const currentPlayer = this.chess.turn();
-        
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = board[row][col];
-                if (piece && piece.type === 'k' && piece.color === currentPlayer) {
-                    const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    if (square) {
-                        square.classList.add('in-check');
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Show game over modal
-    showGameOver(winner, reason) {
-        const modal = document.getElementById('gameOverModal');
-        const title = document.getElementById('gameOverTitle');
-        const result = document.getElementById('gameResult');
-        const message = document.getElementById('gameOverMessage');
-        
-        if (title) {
-            title.textContent = winner === 'Draw' ? '🤝 Draw!' : `🏆 ${winner} Wins!`;
-        }
-        
-        if (result) {
-            result.textContent = winner === 'Draw' ? '🤝 Draw' : `🏆 ${winner} Wins!`;
-        }
-        
-        if (message) {
-            const reasonText = {
-                'checkmate': 'by Checkmate',
-                'stalemate': 'by Stalemate',
-                'draw': 'by Draw'
-            }[reason] || '';
-            message.textContent = `Game ended ${reasonText}`;
-        }
-        
-        // Update final statistics
-        this.updateFinalStats();
-        
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-    
-    // Update final statistics
-    updateFinalStats() {
-        const elements = {
-            finalMoves: document.getElementById('finalMoves'),
-            finalTime: document.getElementById('finalTime'),
-            finalCaptures: document.getElementById('finalCaptures'),
-            finalAccuracy: document.getElementById('finalAccuracy')
+
+    _setPremove(fromRow, fromCol, toRow, toCol) {
+        this._premove = {
+            from: this._rowColToAlgebraic(fromRow, fromCol),
+            to: this._rowColToAlgebraic(toRow, toCol),
+            fromRow, fromCol, toRow, toCol
         };
-        
-        if (elements.finalMoves) {
-            elements.finalMoves.textContent = this.gameStats.totalMoves;
-        }
-        
-        if (elements.finalTime) {
-            const elapsed = Math.floor((Date.now() - this.gameStats.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            elements.finalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        if (elements.finalCaptures) {
-            elements.finalCaptures.textContent = this.gameStats.captures;
-        }
-        
-        if (elements.finalAccuracy) {
-            elements.finalAccuracy.textContent = this.gameStats.accuracy > 0 ? `${this.gameStats.accuracy}%` : '--';
+        this.ui.highlightPremove(this._premove.from, this._premove.to);
+    }
+
+    _clearPremove() {
+        if (!this._premove) return;
+        this._premove = null;
+        this.ui.clearPremove();
+    }
+
+    async _tryPremove() {
+        if (!this._premove || this.gameState !== 'playing') return;
+        const pm = this._premove;
+        this._premove = null;
+        this.ui.clearPremove();
+
+        if (this._isValidMove(pm.fromRow, pm.fromCol, pm.toRow, pm.toCol)) {
+            await this.handleMove(pm.fromRow, pm.fromCol, pm.toRow, pm.toCol, { isPremove: true, autoQueen: true });
+        } else {
+            this.ui.showNotification('Premove cancelled — illegal', 'warning', 2000);
         }
     }
-    
-    // New game
+
+    _checkGameEnd() {
+        if (!ChessCompat.isGameOver(this.chess)) {
+            if (ChessCompat.inCheck(this.chess)) this._highlightCheck();
+            return false;
+        }
+
+        this.gameState = 'ended';
+        clearTimeout(this._aiMoveTimer);
+        this._clearPremove();
+        if (this.clock) this.clock.stop();
+        this._clearAutoSave();
+
+        let winner = 'Draw', reason = 'draw';
+        if (ChessCompat.isCheckmate(this.chess)) {
+            winner = this.chess.turn() === 'w' ? 'Black' : 'White';
+            reason = 'checkmate';
+        } else if (ChessCompat.isStalemate(this.chess)) {
+            reason = 'stalemate';
+        }
+
+        setTimeout(() => {
+            this.ui.showGameOver({ winner, reason, stats: this._getFinalStats() });
+        }, 800);
+        return true;
+    }
+
     newGame() {
-        console.log('🎮 Starting new game...');
-        
-        if (this.chess) {
-            this.chess.reset();
-        }
-        
-        if (this.engine) {
-            this.engine.reset();
-        }
-        
+        clearTimeout(this._aiMoveTimer);
+        this._aiMoveInProgress = false;
+        this._clearPremove();
+        if (this.chess) this.chess.reset();
+        if (this.engine) this.engine.reset();
+
         this.selectedSquare = null;
         this.gameState = 'playing';
         this.lastMove = null;
-        this.draggedPiece = null;
-        this.draggedElement = null;
+        this._historyViewIndex = -1;
+        this._playerMoveScores = [];
         this.gameStats = {
-            totalMoves: 0,
-            captures: 0,
-            checks: 0,
-            startTime: Date.now(),
-            accuracy: 0
+            totalMoves: 0, captures: 0, checks: 0,
+            startTime: Date.now(), accuracy: 0
         };
-        
-        this.updatePieces();
-        this.updateDisplay();
-        this.clearSelection();
-        this.clearDragHighlights();
-        
-        // Close modals
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none';
-        });
-        
-        // If player is black, make AI move first
-        if (this.playerColor === 'black') {
-            console.log('🤖 Player is black, AI will move first');
-            setTimeout(() => this.makeAIMove(), 1000);
+
+        this._setupClock();
+        this._lastSuggestion = null;
+        this._clearAutoSave();
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        this.ui.clearSelection();
+        this.ui.clearHighlights();
+        this.ui.clearArrows();
+        this._refreshBoard();
+        this._deferAnalysis();
+
+        if (this.gameMode === 'ai' && this.playerColor === 'black') {
+            if (this.clock) this.clock.start('w');
+            this._scheduleAIMove();
+        } else if (this.clock) {
+            this.clock.start('w');
         }
     }
-    
-    // Undo move
+
     undoMove() {
+        if (this.gameState === 'viewing') return;
         if (!this.chess || this.gameStats.totalMoves === 0) return;
-        
-        console.log('↩️ Undoing move...');
-        
-        // Undo player move
-        const undoneMove = this.chess.undo();
-        if (undoneMove) {
-            this.gameStats.totalMoves--;
-            
-            // Undo AI move if in AI mode
-            if (this.gameMode === 'ai' && this.gameStats.totalMoves > 0) {
-                const aiMove = this.chess.undo();
-                if (aiMove) {
-                    this.gameStats.totalMoves--;
-                }
-            }
-            
-            // Sync with engine
-            if (this.engine) {
-                this.engine.chess.load(this.chess.fen());
-            }
-            
-            this.gameState = 'playing';
-            this.updatePieces();
-            this.updateDisplay();
-            this.clearSelection();
-            this.clearDragHighlights();
+        clearTimeout(this._aiMoveTimer);
+        this._aiMoveInProgress = false;
+        this._clearPremove();
+
+        const undone = this.chess.undo();
+        if (!undone) return;
+        this.gameStats.totalMoves = Math.max(0, this.gameStats.totalMoves - 1);
+
+        if (this.gameMode === 'ai') {
+            const aiUndo = this.chess.undo();
+            if (aiUndo) this.gameStats.totalMoves = Math.max(0, this.gameStats.totalMoves - 1);
         }
+
+        if (this.engine) this.engine.chess.load(this.chess.fen());
+        this.gameState = 'playing';
+        this._historyViewIndex = -1;
+        this.lastMove = null;
+
+        const history = this.chess.history({ verbose: true });
+        if (history.length > 0) {
+            const last = history[history.length - 1];
+            this.lastMove = { from: last.from, to: last.to };
+        }
+
+        this.ui.clearSelection();
+        this.selectedSquare = null;
+        this._refreshBoard();
+        this._deferAnalysis();
+        this._autoSave();
     }
-    
-    // Flip board
-    flipBoard() {
-        const boardElement = document.getElementById('chessBoard');
-        const leftCoords = document.getElementById('leftCoords');
-        const bottomCoords = document.getElementById('bottomCoords');
-        
-        if (boardElement) {
-            this.isFlipped = !this.isFlipped;
-            
-            if (this.isFlipped) {
-                boardElement.classList.add('flipped');
-                
-                // Reverse coordinates
-                if (leftCoords) {
-                    leftCoords.innerHTML = '<div class="coord">1</div><div class="coord">2</div><div class="coord">3</div><div class="coord">4</div><div class="coord">5</div><div class="coord">6</div><div class="coord">7</div><div class="coord">8</div>';
-                }
-                if (bottomCoords) {
-                    bottomCoords.innerHTML = '<div class="coord">h</div><div class="coord">g</div><div class="coord">f</div><div class="coord">e</div><div class="coord">d</div><div class="coord">c</div><div class="coord">b</div><div class="coord">a</div>';
-                }
+
+    resign() {
+        if (this.gameState !== 'playing') return;
+        if (!confirm('Are you sure you want to resign?')) return;
+        this.gameState = 'ended';
+        if (this.clock) this.clock.stop();
+        this._clearAutoSave();
+        const winner = this.gameMode === 'ai' ? 'AI' : (this.chess.turn() === 'w' ? 'Black' : 'White');
+        this.ui.showGameOver({ winner, reason: 'resignation', stats: this._getFinalStats() });
+    }
+
+    offerDraw() {
+        if (this.gameState !== 'playing') return;
+        if (this.gameMode === 'ai') {
+            const eval_ = this.engine.getCurrentEvaluation();
+            const aiColor = this.playerColor === 'white' ? -1 : 1;
+            if (eval_ * aiColor < 1.0) {
+                this.gameState = 'ended';
+                if (this.clock) this.clock.stop();
+                this._clearAutoSave();
+                this.ui.showGameOver({ winner: 'Draw', reason: 'agreement', stats: this._getFinalStats() });
             } else {
-                boardElement.classList.remove('flipped');
-                
-                // Reset coordinates
-                if (leftCoords) {
-                    leftCoords.innerHTML = '<div class="coord">8</div><div class="coord">7</div><div class="coord">6</div><div class="coord">5</div><div class="coord">4</div><div class="coord">3</div><div class="coord">2</div><div class="coord">1</div>';
-                }
-                if (bottomCoords) {
-                    bottomCoords.innerHTML = '<div class="coord">a</div><div class="coord">b</div><div class="coord">c</div><div class="coord">d</div><div class="coord">e</div><div class="coord">f</div><div class="coord">g</div><div class="coord">h</div>';
-                }
+                this.ui.showNotification('Draw offer declined', 'warning');
             }
+        } else {
+            this.ui.showDrawOfferDialog().then(accepted => {
+                if (accepted) {
+                    this.gameState = 'ended';
+                    if (this.clock) this.clock.stop();
+                    this._clearAutoSave();
+                    this.ui.showGameOver({ winner: 'Draw', reason: 'agreement', stats: this._getFinalStats() });
+                }
+            });
         }
     }
-    
-    // Apply board theme
-    applyBoardTheme() {
-        const boardElement = document.getElementById('chessBoard');
-        if (boardElement) {
-            // Remove existing theme classes
-            boardElement.classList.remove('board-theme-classic', 'board-theme-wooden', 'board-theme-marble', 'board-theme-glass');
-            
-            // Add new theme class
-            boardElement.classList.add(`board-theme-${this.gameSettings.boardTheme}`);
-        }
+
+    flipBoard() {
+        this.isFlipped = !this.isFlipped;
+        this.ui.flipBoard(this.isFlipped);
+        this._updatePlayerPanels();
     }
-    
-    // Load settings
+
+    navigateHistory(direction) {
+        const history = this.chess.history({ verbose: true });
+        if (history.length === 0) return;
+        if (this._historyViewIndex === -1 && direction === 1) return;
+
+        let newIndex;
+        if (this._historyViewIndex === -1) {
+            newIndex = history.length - 1;
+        } else {
+            newIndex = this._historyViewIndex + direction;
+        }
+
+        if (newIndex < 0) { this.goToMove(0); return; }
+        if (newIndex >= history.length) { this.goToLive(); return; }
+        this.goToMove(newIndex);
+    }
+
+    goToMove(index) {
+        const history = this.chess.history({ verbose: true });
+        if (index < 0 || index >= history.length) return;
+
+        this._historyViewIndex = index;
+        const tempChess = new Chess();
+        for (let i = 0; i <= index; i++) tempChess.move(history[i].san);
+
+        this.ui.renderPosition(tempChess.board());
+        if (index >= 0) this.ui.highlightLastMove(history[index].from, history[index].to);
+        this.ui.updateMoveHistory(this.chess.history(), this._historyViewIndex);
+        this.ui.updateEngineAnalysis({ score: null, bestMove: null });
+    }
+
+    goToLive() {
+        this._historyViewIndex = -1;
+        this._refreshBoard();
+        this._deferAnalysis();
+    }
+
+    _setupClock() {
+        const timeControls = {
+            'none': null,
+            'bullet1': { time: 60000, increment: 0 },
+            'bullet2': { time: 120000, increment: 1000 },
+            'blitz3': { time: 180000, increment: 0 },
+            'blitz5': { time: 300000, increment: 0 },
+            'rapid10': { time: 600000, increment: 0 },
+            'rapid15': { time: 900000, increment: 10000 },
+            'classical30': { time: 1800000, increment: 0 }
+        };
+
+        const tc = timeControls[this.gameSettings.timeControl];
+        if (!tc) {
+            this.clock = null;
+            this.ui.updateClocks(null, null, null);
+            return;
+        }
+
+        this.clock = new ChessClock(tc.time, tc.time, tc.increment);
+        this.clock.onTick = (activeColor, times) => {
+            const topColor = this.isFlipped ? 'w' : 'b';
+            const botColor = this.isFlipped ? 'b' : 'w';
+            this.ui.updateClocks(
+                times[topColor], times[botColor],
+                activeColor === topColor ? 'top' : 'bottom'
+            );
+        };
+        this.clock.onTimeout = (loser) => {
+            this.gameState = 'ended';
+            this._clearAutoSave();
+            const winner = loser === 'w' ? 'Black' : 'White';
+            this.ui.showGameOver({ winner, reason: 'timeout', stats: this._getFinalStats() });
+        };
+        this.ui.updateClocks(tc.time, tc.time, null);
+    }
+
     loadSettings() {
-        const saved = localStorage.getItem('chess-settings');
-        if (saved) {
-            try {
-                const settings = JSON.parse(saved);
-                this.gameSettings = { ...this.gameSettings, ...settings };
-            } catch (error) {
-                console.error('❌ Error loading settings:', error);
-            }
-        }
-    }
-    
-    // Save settings
-    saveSettings() {
         try {
-            localStorage.setItem('chess-settings', JSON.stringify(this.gameSettings));
-        } catch (error) {
-            console.error('❌ Error saving settings:', error);
-        }
+            const saved = localStorage.getItem('chess-settings');
+            if (saved) this.gameSettings = { ...this.gameSettings, ...JSON.parse(saved) };
+        } catch (e) { /* localStorage may be unavailable */ }
     }
-    
-    // Apply settings
+
+    saveSettings() {
+        try { localStorage.setItem('chess-settings', JSON.stringify(this.gameSettings)); }
+        catch (e) { /* localStorage may be unavailable */ }
+    }
+
     applySettings() {
-        // Apply difficulty
-        if (this.engine) {
-            this.engine.setDifficulty(this.gameSettings.difficulty);
-        }
-        
-        // Apply board theme
-        this.applyBoardTheme();
-        
-        // Apply coordinate visibility
-        const coords = document.querySelectorAll('.coordinates');
-        coords.forEach(coord => {
-            coord.style.display = this.gameSettings.showCoordinates ? 'flex' : 'none';
+        if (this.engine) this.engine.setDifficulty(this.gameSettings.difficulty);
+        this.ui.applyTheme(this.gameSettings.boardTheme);
+
+        document.querySelectorAll('.coordinates').forEach(c => {
+            c.style.display = this.gameSettings.showCoordinates ? 'flex' : 'none';
         });
-        
-        // Update difficulty display
-        const difficultyElement = document.getElementById('difficulty');
-        if (difficultyElement) {
-            const difficultyNames = {
-                'easy': '🟢 Easy',
-                'medium': '🟡 Medium',
-                'hard': '🔴 Hard',
-                'expert': '⚫ Expert'
-            };
-            difficultyElement.textContent = difficultyNames[this.gameSettings.difficulty];
-        }
-        
-        // Update AI rating
-        const aiRating = document.getElementById('aiRating');
-        if (aiRating) {
-            const ratings = {
-                'easy': '900',
-                'medium': '1400',
-                'hard': '1800',
-                'expert': '2200'
-            };
-            aiRating.textContent = ratings[this.gameSettings.difficulty];
-        }
-        
-        // Set player color
-        this.playerColor = this.gameSettings.playerColor === 'random' ? 
-            (Math.random() > 0.5 ? 'white' : 'black') : 
-            this.gameSettings.playerColor;
+
+        const diffNames = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert' };
+        const diffEl = document.getElementById('difficulty');
+        if (diffEl) diffEl.textContent = diffNames[this.gameSettings.difficulty] || 'Medium';
+        const modeEl = document.getElementById('gameMode');
+        if (modeEl) modeEl.textContent = this.gameMode === 'ai' ? 'vs AI' : 'Local';
+        const drawBtn = document.getElementById('drawBtn');
+        if (drawBtn) drawBtn.style.display = this.gameMode === 'ai' ? 'none' : '';
+
+        this.playerColor = this.gameSettings.playerColor === 'random' ?
+            (Math.random() > 0.5 ? 'white' : 'black') : this.gameSettings.playerColor;
+
+        this._updatePlayerPanels();
     }
-    
-    // Show settings modal
+
+    _updatePlayerPanels() {
+        const bottomColor = this.isFlipped ? 'black' : 'white';
+        const ratings = { easy: '900', medium: '1400', hard: '1800', expert: '2200' };
+        const aiRating = ratings[this.gameSettings.difficulty] || '1400';
+
+        let topName, bottomName, topRating, bottomRating;
+        if (this.gameMode === 'ai') {
+            const playerOnBottom = this.playerColor === bottomColor;
+            topName = playerOnBottom ? 'AI Opponent' : 'You';
+            bottomName = playerOnBottom ? 'You' : 'AI Opponent';
+            topRating = playerOnBottom ? aiRating : '';
+            bottomRating = playerOnBottom ? '' : aiRating;
+        } else {
+            topName = this.isFlipped ? 'White' : 'Black';
+            bottomName = this.isFlipped ? 'Black' : 'White';
+            topRating = '';
+            bottomRating = '';
+        }
+
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        set('topPlayerName', topName);
+        set('bottomPlayerName', bottomName);
+        set('topRating', topRating);
+        set('bottomRating', bottomRating);
+    }
+
     showSettings() {
-        const modal = document.getElementById('settingsModal');
-        
-        // Update form values
-        document.getElementById('difficultySelect').value = this.gameSettings.difficulty;
-        document.getElementById('playerColorSelect').value = this.gameSettings.playerColor;
-        document.getElementById('boardThemeSelect').value = this.gameSettings.boardTheme;
-        document.getElementById('showCoordinates').checked = this.gameSettings.showCoordinates;
-        document.getElementById('highlightLastMove').checked = this.gameSettings.highlightLastMove;
-        document.getElementById('showPossibleMoves').checked = this.gameSettings.showPossibleMoves;
-        document.getElementById('enableAnimations').checked = this.gameSettings.enableAnimations;
-        document.getElementById('enableSounds').checked = this.gameSettings.enableSounds;
-        document.getElementById('volumeSlider').value = this.gameSettings.volume;
-        document.getElementById('volumeValue').textContent = this.gameSettings.volume + '%';
-        
-        if (modal) {
-            modal.style.display = 'flex';
+        for (const s of SETTINGS_MAP) {
+            const el = document.getElementById(s.id);
+            if (el) el[s.prop] = this.gameSettings[s.key];
         }
+        const volVal = document.getElementById('volumeValue');
+        if (volVal) volVal.textContent = this.gameSettings.volume + '%';
+        const modal = document.getElementById('settingsModal');
+        if (modal) modal.style.display = 'flex';
     }
-    
-    // Export game as PGN
-    exportGame() {
+
+    saveSettingsFromForm() {
+        for (const s of SETTINGS_MAP) {
+            const el = document.getElementById(s.id);
+            if (!el) continue;
+            this.gameSettings[s.key] = s.parse ? s.parse(el[s.prop]) : el[s.prop];
+        }
+        this.saveSettings();
+        this.applySettings();
+    }
+
+    resetSettings() {
+        this.gameSettings = {
+            difficulty: 'medium', playerColor: 'white', gameMode: 'ai',
+            timeControl: 'none', showCoordinates: true, highlightLastMove: true,
+            showPossibleMoves: true, enableAnimations: true, enableSounds: true,
+            volume: 50, boardTheme: 'classic'
+        };
+        this.saveSettings();
+        this.applySettings();
+        this.showSettings();
+    }
+
+    exportPGN() {
         if (!this.chess) return;
-        
         const pgn = this.chess.pgn();
         const blob = new Blob([pgn], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
-        
         const a = document.createElement('a');
         a.href = url;
         a.download = `chess-game-${new Date().toISOString().split('T')[0]}.pgn`;
@@ -1239,152 +759,233 @@ class ChessGame {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
-    
-    // Bind events
-    bindEvents() {
-        console.log('🔗 Binding events...');
-        
-        // Game control buttons
-        document.getElementById('newGameBtn')?.addEventListener('click', () => this.newGame());
-        document.getElementById('flipBoardBtn')?.addEventListener('click', () => this.flipBoard());
-        document.getElementById('undoBtn')?.addEventListener('click', () => this.undoMove());
-        document.getElementById('settingsBtn')?.addEventListener('click', () => this.showSettings());
-        document.getElementById('helpBtn')?.addEventListener('click', () => {
-            document.getElementById('helpModal').style.display = 'flex';
-        });
-        
-        // Modal controls
-        document.getElementById('closeSettings')?.addEventListener('click', () => {
-            document.getElementById('settingsModal').style.display = 'none';
-        });
-        
-        document.getElementById('closeGameOver')?.addEventListener('click', () => {
-            document.getElementById('gameOverModal').style.display = 'none';
-        });
-        
-        document.getElementById('closeHelp')?.addEventListener('click', () => {
-            document.getElementById('helpModal').style.display = 'none';
-        });
-        
-        document.getElementById('closeHelpBtn')?.addEventListener('click', () => {
-            document.getElementById('helpModal').style.display = 'none';
-        });
-        
-        // Game over modal buttons
-        document.getElementById('playAgainBtn')?.addEventListener('click', () => this.newGame());
-        document.getElementById('exportGameBtn')?.addEventListener('click', () => this.exportGame());
-        
-        // Settings modal buttons
-        document.getElementById('saveSettings')?.addEventListener('click', () => {
-            this.saveSettingsFromForm();
-            document.getElementById('settingsModal').style.display = 'none';
-        });
-        
-        document.getElementById('resetSettings')?.addEventListener('click', () => {
-            this.resetSettings();
-        });
-        
-        // Volume slider
-        document.getElementById('volumeSlider')?.addEventListener('input', (e) => {
-            document.getElementById('volumeValue').textContent = e.target.value + '%';
-        });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.clearSelection();
+
+    importPGN(pgnText) {
+        if (!pgnText || !pgnText.trim()) {
+            this.ui.showNotification('Please enter a PGN', 'warning');
+            return false;
+        }
+        const temp = new Chess();
+        if (!temp.load_pgn(pgnText)) {
+            this.ui.showNotification('Invalid PGN format', 'error');
+            return false;
+        }
+        this.chess.reset();
+        this.chess.load_pgn(pgnText);
+        if (this.engine) this.engine.chess.load(this.chess.fen());
+
+        this.gameState = 'viewing';
+        this._historyViewIndex = -1;
+        this.lastMove = null;
+        this._clearAutoSave();
+        if (this.clock) this.clock.stop();
+
+        const history = this.chess.history({ verbose: true });
+        if (history.length > 0) {
+            const last = history[history.length - 1];
+            this.lastMove = { from: last.from, to: last.to };
+        }
+
+        this._refreshBoard();
+        this.ui.showNotification(`Loaded game: ${history.length} moves`, 'success');
+        return true;
+    }
+
+    _autoSave() {
+        if (this.gameState !== 'playing' || !this.chess) return;
+        try {
+            localStorage.setItem('chess-autosave', JSON.stringify({
+                pgn: this.chess.pgn(),
+                playerColor: this.playerColor,
+                stats: this.gameStats,
+                ts: Date.now()
+            }));
+        } catch (e) { /* localStorage may be unavailable */ }
+    }
+
+    _loadAutoSave() {
+        try {
+            const raw = localStorage.getItem('chess-autosave');
+            if (!raw) return false;
+            const save = JSON.parse(raw);
+            if (Date.now() - save.ts > 86400000) { this._clearAutoSave(); return false; }
+            if (save.pgn == null) return false;
+            if (save.pgn !== '' && !this.chess.load_pgn(save.pgn)) return false;
+
+            if (this.engine) this.engine.chess.load(this.chess.fen());
+            if (save.playerColor) this.playerColor = save.playerColor;
+            if (save.stats) this.gameStats = { ...this.gameStats, ...save.stats, startTime: Date.now() };
+
+            const history = this.chess.history({ verbose: true });
+            if (history.length > 0) {
+                const last = history[history.length - 1];
+                this.lastMove = { from: last.from, to: last.to };
+            }
+
+            this.ui.showNotification('Game restored', 'info');
+            if (this.gameMode === 'ai' &&
+                this.chess.turn() !== (this.playerColor === 'white' ? 'w' : 'b') &&
+                !ChessCompat.isGameOver(this.chess)) {
+                this._scheduleAIMove();
+            }
+            return true;
+        } catch (e) {
+            this._clearAutoSave();
+            return false;
+        }
+    }
+
+    _clearAutoSave() {
+        try { localStorage.removeItem('chess-autosave'); } catch (e) {}
+    }
+
+    _getOpeningName() {
+        const history = this.chess.history();
+        for (let len = Math.min(history.length, 15); len >= 1; len--) {
+            const key = history.slice(0, len).join(' ');
+            if (OPENINGS[key]) return OPENINGS[key];
+        }
+        return null;
+    }
+
+    _rowColToAlgebraic(row, col) {
+        return 'abcdefgh'[col] + (8 - row);
+    }
+
+    _algebraicToRowCol(sq) {
+        return { row: 8 - parseInt(sq[1]), col: 'abcdefgh'.indexOf(sq[0]) };
+    }
+
+    _selectPiece(row, col) {
+        this.selectedSquare = { row, col };
+        this.ui.selectSquare(row, col);
+        if (this.gameSettings.showPossibleMoves) {
+            const moves = this.chess.moves({ square: this._rowColToAlgebraic(row, col), verbose: true });
+            this.ui.highlightValidMoves(moves);
+        }
+    }
+
+    _isValidMove(fromRow, fromCol, toRow, toCol) {
+        const from = this._rowColToAlgebraic(fromRow, fromCol);
+        const to = this._rowColToAlgebraic(toRow, toCol);
+        return this.chess.moves({ square: from, verbose: true }).some(m => m.to === to);
+    }
+
+    _highlightCheck() {
+        const board = this.chess.board();
+        const turn = this.chess.turn();
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const p = board[r][c];
+                if (p && p.type === 'k' && p.color === turn) {
+                    this.ui.highlightKingInCheck(this._rowColToAlgebraic(r, c));
+                    return;
+                }
+            }
+        }
+    }
+
+    _getCapturedPieces() {
+        const history = this.chess.history({ verbose: true });
+        const white = [], black = [];
+        history.forEach(m => {
+            if (m.captured) {
+                const capturedColor = m.color === 'w' ? 'b' : 'w';
+                (m.color === 'w' ? white : black).push({ type: m.captured, color: capturedColor });
             }
         });
-        
-        // Click outside modal to close
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
+        return { white, black };
+    }
+
+    _refreshBoard() {
+        if (!this.chess) return;
+
+        this.ui.renderPosition(this.chess.board());
+
+        if (this.lastMove && this.gameSettings.highlightLastMove) {
+            this.ui.highlightLastMove(this.lastMove.from, this.lastMove.to);
+        }
+        if (ChessCompat.inCheck(this.chess) && this.gameState === 'playing') {
+            this._highlightCheck();
+        }
+
+        const turn = this.chess.turn();
+        this.ui.updateDisplay({
+            turn: turn === 'w' ? 'White' : 'Black',
+            mode: this.gameMode === 'ai' ? 'vs AI' : 'Local',
+            difficulty: this.gameSettings.difficulty,
+            gameTime: this._formatElapsed()
         });
+
+        this.ui.updateGameStats(this.gameStats);
+        this.ui.updateMoveHistory(this.chess.history(), this._historyViewIndex);
+
+        const captured = this._getCapturedPieces();
+        const topIsBlack = !this.isFlipped;
+        this.ui.updateCapturedPieces(
+            topIsBlack ? captured.black : captured.white,
+            topIsBlack ? captured.white : captured.black
+        );
+
+        const openingEl = document.getElementById('openingName');
+        if (openingEl) {
+            const name = this._getOpeningName();
+            openingEl.textContent = name || '';
+            openingEl.style.display = name ? 'block' : 'none';
+        }
     }
-    
-    // Save settings from form
-    saveSettingsFromForm() {
-        this.gameSettings.difficulty = document.getElementById('difficultySelect').value;
-        this.gameSettings.playerColor = document.getElementById('playerColorSelect').value;
-        this.gameSettings.boardTheme = document.getElementById('boardThemeSelect').value;
-        this.gameSettings.showCoordinates = document.getElementById('showCoordinates').checked;
-        this.gameSettings.highlightLastMove = document.getElementById('highlightLastMove').checked;
-        this.gameSettings.showPossibleMoves = document.getElementById('showPossibleMoves').checked;
-        this.gameSettings.enableAnimations = document.getElementById('enableAnimations').checked;
-        this.gameSettings.enableSounds = document.getElementById('enableSounds').checked;
-        this.gameSettings.volume = parseInt(document.getElementById('volumeSlider').value);
-        
-        this.saveSettings();
-        this.applySettings();
-        
-        console.log('💾 Settings saved:', this.gameSettings);
+
+    _deferAnalysis() {
+        if (this._analysisTimer) clearTimeout(this._analysisTimer);
+        this._analysisTimer = setTimeout(() => {
+            if (!this.engine || this._historyViewIndex !== -1) return;
+            const score = this.engine.getCurrentEvaluation();
+            const suggestion = this.engine.getBestMoveSuggestion();
+            this._lastSuggestion = suggestion;
+            this.ui.updateEngineAnalysis({
+                score,
+                bestMove: suggestion ? suggestion.san : null
+            });
+        }, 0);
     }
-    
-    // Reset settings
-    resetSettings() {
-        this.gameSettings = {
-            difficulty: 'medium',
-            playerColor: 'white',
-            showCoordinates: true,
-            highlightLastMove: true,
-            showPossibleMoves: true,
-            enableAnimations: true,
-            enableSounds: true,
-            volume: 50,
-            boardTheme: 'classic'
+
+    _formatElapsed() {
+        const elapsed = Math.floor((Date.now() - this.gameStats.startTime) / 1000);
+        const m = Math.floor(elapsed / 60);
+        const s = elapsed % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    _getFinalStats() {
+        return {
+            totalMoves: this.gameStats.totalMoves,
+            captures: this.gameStats.captures,
+            checks: this.gameStats.checks,
+            accuracy: this.gameStats.accuracy,
+            gameTime: this._formatElapsed()
         };
-        
-        this.saveSettings();
-        this.applySettings();
-        
-        // Update form
-        document.getElementById('difficultySelect').value = this.gameSettings.difficulty;
-        document.getElementById('playerColorSelect').value = this.gameSettings.playerColor;
-        document.getElementById('boardThemeSelect').value = this.gameSettings.boardTheme;
-        document.getElementById('showCoordinates').checked = this.gameSettings.showCoordinates;
-        document.getElementById('highlightLastMove').checked = this.gameSettings.highlightLastMove;
-        document.getElementById('showPossibleMoves').checked = this.gameSettings.showPossibleMoves;
-        document.getElementById('enableAnimations').checked = this.gameSettings.enableAnimations;
-        document.getElementById('enableSounds').checked = this.gameSettings.enableSounds;
-        document.getElementById('volumeSlider').value = this.gameSettings.volume;
-        document.getElementById('volumeValue').textContent = this.gameSettings.volume + '%';
-        
-        console.log('🔄 Settings reset to defaults');
+    }
+
+    _updateAccuracy(from, to, suggestion) {
+        if (!suggestion || this.gameMode !== 'ai') return;
+        this._playerMoveScores.push(suggestion.from === from && suggestion.to === to ? 1 : 0);
+        const total = this._playerMoveScores.reduce((a, b) => a + b, 0);
+        this.gameStats.accuracy = Math.round((total / this._playerMoveScores.length) * 100);
     }
 }
 
-// Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 DOM loaded, initializing chess game...');
-    
-    // Check if Chess.js is loaded
     if (typeof Chess === 'undefined') {
-        console.error('❌ Chess.js library not loaded!');
-        const boardElement = document.getElementById('chessBoard');
-        if (boardElement) {
-            boardElement.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Chess.js library failed to load. Please refresh the page.</div>';
-        }
+        const board = document.getElementById('chessBoard');
+        if (board) board.innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px">Chess.js failed to load. Please refresh.</div>';
         return;
     }
-    
-    try {
-        window.game = new ChessGame();
-        console.log('🎉 Chess game initialized successfully');
-        
-        // Update game statistics every second
-        setInterval(() => {
-            if (window.game && window.game.gameStats.startTime && window.game.gameState === 'playing') {
-                window.game.updateGameStats();
-            }
-        }, 1000);
-        
-    } catch (error) {
-        console.error('❌ Failed to initialize chess game:', error);
-        const boardElement = document.getElementById('chessBoard');
-        if (boardElement) {
-            boardElement.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">Failed to initialize chess game: ${error.message}</div>`;
+    window.game = new ChessGame();
+
+    setInterval(() => {
+        if (window.game && window.game.gameState === 'playing') {
+            const el = document.getElementById('gameTime');
+            if (el) el.textContent = window.game._formatElapsed();
         }
-    }
+    }, 1000);
 });

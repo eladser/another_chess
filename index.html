@@ -3,54 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Another Chess - Enhanced Chess Game</title>
+    <title>Another Chess</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♔</text></svg>">
-    <!-- Chess.js library -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#9812;</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <meta name="description" content="Enhanced chess game with advanced AI, drag & drop, beautiful themes, and comprehensive features">
-    <meta name="keywords" content="chess, game, AI, drag and drop, online chess, chess engine">
-    <meta name="author" content="Another Chess">
-    <meta name="theme-color" content="#667eea">
-    <!-- Open Graph meta tags -->
-    <meta property="og:title" content="Another Chess - Enhanced Chess Game">
-    <meta property="og:description" content="Play chess with advanced AI, beautiful themes, and enhanced features">
+    <meta name="description" content="A clean, modern chess game with AI opponent, time controls, and two-player mode.">
+    <meta name="theme-color" content="#5b8def">
+    <meta property="og:title" content="Another Chess">
+    <meta property="og:description" content="Play chess with a smart AI, time controls, and a clean modern interface.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://eladser.github.io/another_chess/">
-    <meta property="og:image" content="https://eladser.github.io/another_chess/chess-preview.png">
-    <!-- Twitter Card meta tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Another Chess - Enhanced Chess Game">
-    <meta name="twitter:description" content="Play chess with advanced AI, beautiful themes, and enhanced features">
-    <meta name="twitter:image" content="https://eladser.github.io/another_chess/chess-preview.png">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1 class="title">♔ Another Chess</h1>
+            <h1 class="title">Another Chess</h1>
             <div class="game-controls">
-                <button id="newGameBtn" class="btn btn-primary" title="Start a new game (Ctrl+N)">🎮 New Game</button>
-                <button id="flipBoardBtn" class="btn btn-secondary" title="Flip the board (Ctrl+F)">🔄 Flip Board</button>
-                <button id="undoBtn" class="btn btn-secondary" title="Undo last move (Ctrl+U)">↩️ Undo</button>
-                <button id="settingsBtn" class="btn btn-secondary" title="Open settings (Ctrl+S)">⚙️ Settings</button>
-                <button id="helpBtn" class="btn btn-secondary" title="Show help (H or ?)">❓ Help</button>
+                <button id="newGameBtn" class="btn btn-primary" title="New Game (Ctrl+N)">New Game</button>
+                <button id="flipBoardBtn" class="btn btn-secondary" title="Flip Board (Ctrl+F)">Flip</button>
+                <button id="undoBtn" class="btn btn-secondary" title="Undo (Ctrl+U)">Undo</button>
+                <button id="resignBtn" class="btn btn-secondary btn-danger-text" title="Resign">Resign</button>
+                <button id="drawBtn" class="btn btn-secondary" title="Offer Draw">Draw</button>
+                <button id="importPgnBtn" class="btn btn-secondary" title="Import PGN">Import</button>
+                <button id="settingsBtn" class="btn btn-icon" title="Settings (Ctrl+S)" aria-label="Settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                <button id="helpBtn" class="btn btn-icon" title="Help (H)" aria-label="Help">?</button>
             </div>
         </header>
 
         <main class="game-area">
             <div class="game-info">
-                <div class="player-info">
-                    <div class="player" id="topPlayer">
-                        <div class="player-header">
-                            <div class="player-name">🤖 AI Opponent</div>
-                            <div class="player-rating">⭐ <span id="aiRating">1400</span></div>
-                        </div>
-                        <div class="captured-pieces" id="topCaptured"></div>
-                        <div class="player-time" id="topTime">⏱️ ∞</div>
+                <!-- Top Player -->
+                <div class="player" id="topPlayer">
+                    <div class="player-header">
+                        <div class="player-name" id="topPlayerName">AI Opponent</div>
+                        <div class="player-rating"><span id="topRating">1400</span></div>
                     </div>
+                    <div class="captured-pieces" id="topCaptured"></div>
+                    <div class="player-time" id="topTime">--:--</div>
                 </div>
-                
+
+                <!-- Board -->
                 <div class="chess-board-container">
                     <div class="board-wrapper">
                         <div class="coordinates coordinates-left" id="leftCoords">
@@ -79,74 +74,84 @@
                     </div>
                 </div>
 
-                <div class="game-info">
-                    <div class="player-info">
-                        <div class="player" id="bottomPlayer">
-                            <div class="player-header">
-                                <div class="player-name">👤 You</div>
-                                <div class="player-rating">⭐ <span id="playerRating">1200</span></div>
-                            </div>
-                            <div class="captured-pieces" id="bottomCaptured"></div>
-                            <div class="player-time" id="bottomTime">⏱️ ∞</div>
-                        </div>
+                <!-- Bottom Player -->
+                <div class="player" id="bottomPlayer">
+                    <div class="player-header">
+                        <div class="player-name" id="bottomPlayerName">You</div>
+                        <div class="player-rating"><span id="bottomRating">1200</span></div>
                     </div>
+                    <div class="captured-pieces" id="bottomCaptured"></div>
+                    <div class="player-time" id="bottomTime">--:--</div>
                 </div>
             </div>
 
             <div class="game-sidebar">
+                <!-- Game Status -->
                 <div class="game-status">
                     <div class="status-item">
-                        <span class="status-label">Turn:</span>
-                        <span id="currentTurn" class="status-value">⚪ White</span>
+                        <span class="status-label">Turn</span>
+                        <span id="currentTurn" class="status-value">White</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Mode:</span>
-                        <span id="gameMode" class="status-value">🤖 vs AI</span>
+                        <span class="status-label">Mode</span>
+                        <span id="gameMode" class="status-value">vs AI</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Difficulty:</span>
-                        <span id="difficulty" class="status-value">🎯 Medium</span>
+                        <span class="status-label">Difficulty</span>
+                        <span id="difficulty" class="status-value">Medium</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Time:</span>
-                        <span id="gameTime" class="status-value">⏱️ 0:00</span>
+                        <span class="status-label">Time</span>
+                        <span id="gameTime" class="status-value">0:00</span>
                     </div>
                 </div>
 
+                <!-- Opening Name -->
+                <div id="openingName" class="opening-name" style="display:none"></div>
+
+                <!-- Statistics -->
                 <div class="game-statistics">
-                    <h3>📊 Game Statistics</h3>
+                    <h3>Statistics</h3>
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <span class="stat-label">Moves:</span>
+                            <span class="stat-label">Moves</span>
                             <span id="totalMoves" class="stat-value">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Captures:</span>
+                            <span class="stat-label">Captures</span>
                             <span id="captures" class="stat-value">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Checks:</span>
+                            <span class="stat-label">Checks</span>
                             <span id="checks" class="stat-value">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Accuracy:</span>
+                            <span class="stat-label">Accuracy</span>
                             <span id="accuracy" class="stat-value">--</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Engine Analysis -->
                 <div class="engine-analysis">
-                    <h3>🔬 Engine Analysis</h3>
+                    <h3>Analysis</h3>
                     <div class="analysis-bar">
                         <div class="eval-bar" id="evalBar"></div>
                         <div class="eval-text" id="evalText">+0.0</div>
                     </div>
-                    <div class="best-move" id="bestMove">✅ Ready</div>
+                    <div class="best-move" id="bestMove">Ready</div>
                 </div>
 
+                <!-- Move History -->
                 <div class="move-history">
-                    <h3>📜 Move History</h3>
+                    <h3>Moves</h3>
                     <div id="moveList" class="move-list" role="log" aria-label="Move history"></div>
+                    <div class="move-navigation">
+                        <button id="moveFirst" class="btn btn-icon btn-sm" title="First move (Home)" aria-label="First move">&#x23EE;</button>
+                        <button id="movePrev" class="btn btn-icon btn-sm" title="Previous move (Left)" aria-label="Previous move">&#x25C0;</button>
+                        <button id="moveNext" class="btn btn-icon btn-sm" title="Next move (Right)" aria-label="Next move">&#x25B6;</button>
+                        <button id="moveLast" class="btn btn-icon btn-sm" title="Current position (End)" aria-label="Current position">&#x23ED;</button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -156,85 +161,91 @@
     <div id="settingsModal" class="modal" role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="settingsTitle">⚙️ Settings</h2>
-                <button class="close-btn" id="closeSettings" aria-label="Close settings">&times;</button>
+                <h2 id="settingsTitle">Settings</h2>
+                <button class="close-btn" id="closeSettings" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="settings-section">
-                    <h3>🎮 Game Settings</h3>
+                    <h3>Game</h3>
                     <div class="setting-item">
-                        <label for="difficultySelect">AI Difficulty:</label>
-                        <select id="difficultySelect" aria-describedby="difficultyHelp">
-                            <option value="easy">🟢 Easy (900 ELO)</option>
-                            <option value="medium" selected>🟡 Medium (1400 ELO)</option>
-                            <option value="hard">🔴 Hard (1800 ELO)</option>
-                            <option value="expert">⚫ Expert (2200 ELO)</option>
+                        <label for="gameModeSelect">Game Mode</label>
+                        <select id="gameModeSelect">
+                            <option value="ai" selected>vs AI</option>
+                            <option value="local">Two Players (Local)</option>
                         </select>
-                        <small id="difficultyHelp">Choose AI opponent strength</small>
                     </div>
                     <div class="setting-item">
-                        <label for="playerColorSelect">Play as:</label>
+                        <label for="difficultySelect">AI Difficulty</label>
+                        <select id="difficultySelect">
+                            <option value="easy">Easy (900)</option>
+                            <option value="medium" selected>Medium (1400)</option>
+                            <option value="hard">Hard (1800)</option>
+                            <option value="expert">Expert (2200)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="playerColorSelect">Play as</label>
                         <select id="playerColorSelect">
-                            <option value="white" selected>⚪ White</option>
-                            <option value="black">⚫ Black</option>
-                            <option value="random">🎲 Random</option>
+                            <option value="white" selected>White</option>
+                            <option value="black">Black</option>
+                            <option value="random">Random</option>
                         </select>
                     </div>
                     <div class="setting-item">
-                        <label for="boardThemeSelect">Board Theme:</label>
+                        <label for="timeControlSelect">Time Control</label>
+                        <select id="timeControlSelect">
+                            <option value="none" selected>No Limit</option>
+                            <option value="bullet1">Bullet (1 min)</option>
+                            <option value="bullet2">Bullet (2+1)</option>
+                            <option value="blitz3">Blitz (3 min)</option>
+                            <option value="blitz5">Blitz (5 min)</option>
+                            <option value="rapid10">Rapid (10 min)</option>
+                            <option value="rapid15">Rapid (15+10)</option>
+                            <option value="classical30">Classical (30 min)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="boardThemeSelect">Board Theme</label>
                         <select id="boardThemeSelect">
-                            <option value="classic" selected>🏛️ Classic</option>
-                            <option value="wooden">🪵 Wooden</option>
-                            <option value="marble">🏛️ Marble</option>
-                            <option value="glass">🪟 Glass</option>
+                            <option value="classic" selected>Classic</option>
+                            <option value="wooden">Wooden</option>
+                            <option value="marble">Marble</option>
+                            <option value="glass">Glass</option>
                         </select>
                     </div>
                 </div>
                 <div class="settings-section">
-                    <h3>🎨 Display Settings</h3>
+                    <h3>Display</h3>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showCoordinates" checked>
-                            Show Coordinates (a-h, 1-8)
-                        </label>
+                        <label><input type="checkbox" id="showCoordinates" checked> Show Coordinates</label>
                     </div>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="highlightLastMove" checked>
-                            Highlight Last Move
-                        </label>
+                        <label><input type="checkbox" id="highlightLastMove" checked> Highlight Last Move</label>
                     </div>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showPossibleMoves" checked>
-                            Show Possible Moves
-                        </label>
+                        <label><input type="checkbox" id="showPossibleMoves" checked> Show Legal Moves</label>
                     </div>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="enableAnimations" checked>
-                            Enable Animations
-                        </label>
+                        <label><input type="checkbox" id="enableAnimations" checked> Animations</label>
                     </div>
                 </div>
                 <div class="settings-section">
-                    <h3>🔊 Audio Settings</h3>
+                    <h3>Audio</h3>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="enableSounds" checked>
-                            Enable Sound Effects
-                        </label>
+                        <label><input type="checkbox" id="enableSounds" checked> Sound Effects</label>
                     </div>
                     <div class="setting-item">
-                        <label for="volumeSlider">Volume:</label>
-                        <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-describedby="volumeValue">
-                        <span id="volumeValue">50%</span>
+                        <label for="volumeSlider">Volume</label>
+                        <div class="volume-control">
+                            <input type="range" id="volumeSlider" min="0" max="100" value="50">
+                            <span id="volumeValue">50%</span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="saveSettings" class="btn btn-primary">💾 Save Settings</button>
-                <button id="resetSettings" class="btn btn-secondary">🔄 Reset to Default</button>
+                <button id="resetSettings" class="btn btn-secondary">Reset</button>
+                <button id="saveSettings" class="btn btn-primary">Save</button>
             </div>
         </div>
     </div>
@@ -243,37 +254,36 @@
     <div id="gameOverModal" class="modal" role="dialog" aria-labelledby="gameOverTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="gameOverTitle">🎮 Game Over</h2>
-                <button class="close-btn" id="closeGameOver" aria-label="Close game over dialog">&times;</button>
+                <h2 id="gameOverTitle">Game Over</h2>
+                <button class="close-btn" id="closeGameOver" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="game-over-content">
-                    <div class="game-result" id="gameResult">🎉 Result</div>
-                    <p id="gameOverMessage">Game has ended!</p>
+                    <div class="game-result" id="gameResult">Result</div>
+                    <p id="gameOverMessage">Game has ended.</p>
                     <div class="game-over-stats">
                         <div class="stat-item">
-                            <span class="stat-label">Total Moves:</span>
+                            <span class="stat-label">Moves</span>
                             <span id="finalMoves" class="stat-value">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Game Time:</span>
+                            <span class="stat-label">Time</span>
                             <span id="finalTime" class="stat-value">0:00</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Captures:</span>
+                            <span class="stat-label">Captures</span>
                             <span id="finalCaptures" class="stat-value">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Accuracy:</span>
+                            <span class="stat-label">Accuracy</span>
                             <span id="finalAccuracy" class="stat-value">--</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="playAgainBtn" class="btn btn-primary">🎮 Play Again</button>
-                <button id="analyzeGameBtn" class="btn btn-secondary">🔍 Analyze Game</button>
-                <button id="exportGameBtn" class="btn btn-secondary">📁 Export PGN</button>
+                <button id="exportGameBtn" class="btn btn-secondary">Export PGN</button>
+                <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
             </div>
         </div>
     </div>
@@ -282,60 +292,53 @@
     <div id="helpModal" class="modal" role="dialog" aria-labelledby="helpTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="helpTitle">❓ How to Play</h2>
-                <button class="close-btn" id="closeHelp" aria-label="Close help dialog">&times;</button>
+                <h2 id="helpTitle">How to Play</h2>
+                <button class="close-btn" id="closeHelp" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="help-content">
-                    <h3>🎯 Objective</h3>
-                    <p>The goal is to checkmate your opponent's king by attacking it in a way that it cannot escape capture.</p>
-                    
-                    <h3>🎮 Controls</h3>
+                    <h3>Controls</h3>
                     <ul>
-                        <li><strong>🖱️ Click:</strong> Select a piece, then click destination square</li>
-                        <li><strong>🖱️ Drag & Drop:</strong> Drag pieces to move them (fully functional!)</li>
-                        <li><strong>📱 Touch:</strong> Touch and drag pieces on mobile devices</li>
-                        <li><strong>🖱️ Right-click:</strong> Cancel current selection</li>
-                        <li><strong>⌨️ Escape:</strong> Cancel current selection</li>
-                        <li><strong>⌨️ Ctrl+U:</strong> Undo last move</li>
-                        <li><strong>⌨️ Ctrl+N:</strong> New game</li>
-                        <li><strong>⌨️ Ctrl+F:</strong> Flip board</li>
-                        <li><strong>⌨️ Ctrl+S:</strong> Open settings</li>
-                        <li><strong>⌨️ H or ?:</strong> Show this help</li>
-                        <li><strong>⌨️ Arrow keys:</strong> Navigate move history</li>
+                        <li><strong>Click:</strong> Select a piece, then click destination</li>
+                        <li><strong>Drag & Drop:</strong> Drag pieces to move them</li>
+                        <li><strong>Touch:</strong> Tap or drag on mobile</li>
                     </ul>
-                    
-                    <h3>⚡ Special Moves</h3>
+
+                    <h3>Keyboard Shortcuts</h3>
                     <ul>
-                        <li><strong>🏰 Castling:</strong> Move king 2 squares toward rook</li>
-                        <li><strong>👻 En Passant:</strong> Capture pawn that just moved 2 squares</li>
-                        <li><strong>👑 Promotion:</strong> Pawn reaching end promotes to queen/rook/bishop/knight</li>
+                        <li><strong>Escape:</strong> Cancel selection</li>
+                        <li><strong>Ctrl+N:</strong> New game</li>
+                        <li><strong>Ctrl+U:</strong> Undo</li>
+                        <li><strong>Ctrl+F:</strong> Flip board</li>
+                        <li><strong>Ctrl+S:</strong> Settings</li>
+                        <li><strong>H:</strong> Help</li>
+                        <li><strong>Arrow Left/Right:</strong> Navigate moves</li>
+                        <li><strong>Home/End:</strong> First/last move</li>
                     </ul>
-                    
-                    <h3>🎪 Enhanced Features</h3>
+
+                    <h3>Special Moves</h3>
                     <ul>
-                        <li><strong>🤖 Smart AI:</strong> 4 difficulty levels with realistic play</li>
-                        <li><strong>🔍 Analysis:</strong> Real-time position evaluation</li>
-                        <li><strong>🎨 Themes:</strong> Multiple beautiful board themes</li>
-                        <li><strong>🔊 Audio:</strong> Sound effects for moves and captures</li>
-                        <li><strong>📱 Mobile:</strong> Enhanced touch and drag support</li>
-                        <li><strong>💾 Export:</strong> Save games as PGN files</li>
-                        <li><strong>🏆 Statistics:</strong> Track your progress</li>
-                        <li><strong>🎯 Visual Effects:</strong> Enhanced animations and feedback</li>
+                        <li><strong>Castling:</strong> Move king two squares toward rook</li>
+                        <li><strong>En Passant:</strong> Capture pawn that just moved two squares</li>
+                        <li><strong>Promotion:</strong> Pawn reaching the end rank promotes</li>
                     </ul>
-                    
-                    <h3>🏆 Tips for Success</h3>
+
+                    <h3>Features</h3>
                     <ul>
-                        <li><strong>🎯 Control the center:</strong> Place pieces on central squares</li>
-                        <li><strong>🏰 Castle early:</strong> Keep your king safe</li>
-                        <li><strong>🐎 Develop pieces:</strong> Don't move the same piece twice</li>
-                        <li><strong>🎪 Think ahead:</strong> Consider your opponent's threats</li>
-                        <li><strong>📚 Practice:</strong> Play regularly to improve</li>
+                        <li>4 AI difficulty levels (900-2200 ELO)</li>
+                        <li>Two-player local mode</li>
+                        <li>Time controls (Bullet, Blitz, Rapid, Classical)</li>
+                        <li>Move history navigation</li>
+                        <li>Opening name recognition</li>
+                        <li>Auto-save and resume games</li>
+                        <li>PGN import and export</li>
+                        <li>Draw offers and resignation</li>
+                        <li>4 board themes</li>
                     </ul>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="closeHelpBtn" class="btn btn-primary">✅ Got it!</button>
+                <button id="closeHelpBtn" class="btn btn-primary">Got it</button>
             </div>
         </div>
     </div>
@@ -344,15 +347,33 @@
     <div id="promotionModal" class="modal" role="dialog" aria-labelledby="promotionTitle" aria-modal="true">
         <div class="modal-content promotion-modal">
             <div class="modal-header">
-                <h2 id="promotionTitle">👑 Choose Promotion</h2>
+                <h2 id="promotionTitle">Promote Pawn</h2>
             </div>
             <div class="modal-body">
                 <div class="promotion-pieces">
-                    <div class="promotion-piece" data-piece="q" title="Queen - Most powerful piece" role="button" tabindex="0">♕</div>
-                    <div class="promotion-piece" data-piece="r" title="Rook - Moves horizontally and vertically" role="button" tabindex="0">♖</div>
-                    <div class="promotion-piece" data-piece="b" title="Bishop - Moves diagonally" role="button" tabindex="0">♗</div>
-                    <div class="promotion-piece" data-piece="n" title="Knight - Moves in L-shape" role="button" tabindex="0">♘</div>
+                    <div class="promotion-piece" data-piece="q" title="Queen" role="button" tabindex="0"></div>
+                    <div class="promotion-piece" data-piece="r" title="Rook" role="button" tabindex="0"></div>
+                    <div class="promotion-piece" data-piece="b" title="Bishop" role="button" tabindex="0"></div>
+                    <div class="promotion-piece" data-piece="n" title="Knight" role="button" tabindex="0"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PGN Import Modal -->
+    <div id="pgnImportModal" class="modal" role="dialog" aria-labelledby="pgnImportTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="pgnImportTitle">Import PGN</h2>
+                <button class="close-btn" id="closePgnImport" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="pgn-import-hint">Paste a PGN from lichess, chess.com, or any chess software.</p>
+                <textarea id="pgnInput" class="pgn-textarea" rows="8" placeholder="1. e4 e5 2. Nf3 Nc6 ..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelPgnImport" class="btn btn-secondary">Cancel</button>
+                <button id="loadPgnBtn" class="btn btn-primary">Load Game</button>
             </div>
         </div>
     </div>
@@ -361,38 +382,20 @@
     <div id="loadingScreen" class="loading-screen" aria-live="polite">
         <div class="loading-content">
             <div class="loading-spinner" aria-hidden="true"></div>
-            <div class="loading-text">🎮 Loading Enhanced Chess Engine...</div>
-            <div class="loading-subtext">Preparing AI, board, and all features...</div>
+            <div class="loading-text">Loading...</div>
         </div>
     </div>
 
-    <!-- Notification System -->
+    <!-- Notifications -->
     <div id="notificationContainer" class="notification-container" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Scripts - Load in correct order -->
-    <script src="chessjs-compatibility.js"></script>
+    <!-- Screen Reader Announcements -->
+    <div id="screenReaderAnnouncer" class="sr-only" aria-live="assertive" role="status"></div>
+
+    <!-- Scripts -->
     <script src="chess-engine.js"></script>
+    <script src="piece-svg.js"></script>
+    <script src="ui.js"></script>
     <script src="game.js"></script>
-    <script src="board-enhancements.js"></script>
-    <script src="game-fixes.js"></script>
-    <script src="drag-drop-fixes.js"></script>
-    <script src="chessjs-fixes.js"></script>
-    
-    <!-- Performance monitoring -->
-    <script>
-        // Basic performance monitoring
-        window.addEventListener('load', () => {
-            if ('performance' in window) {
-                const loadTime = performance.now();
-                console.log(`⚡ Page loaded in ${loadTime.toFixed(2)}ms`);
-                
-                // Log timing metrics
-                const timing = performance.getEntriesByType('navigation')[0];
-                if (timing) {
-                    console.log(`🚀 DOM loaded in ${timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart}ms`);
-                }
-            }
-        });
-    </script>
 </body>
 </html>
